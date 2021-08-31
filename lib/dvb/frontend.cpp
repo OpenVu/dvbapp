@@ -1785,7 +1785,7 @@ int eDVBFrontend::tuneLoopInt()  // called by m_tuneTimer
 				--m_timeoutCount;
 				if (!m_timeoutCount && m_retryCount > 0)
 					--m_retryCount;
-				if (isLocked && ((abs((static_cast<int>(signal = readFrontendData(signalQualitydB)) - cmd.lastSignal) < 40) || !cmd.lastSignal)))
+				if (isLocked && ((abs(static_cast<int>((signal = readFrontendData(signalQualitydB)) - cmd.lastSignal) < 40) || !cmd.lastSignal)))
 				{
 					if (cmd.lastSignal)
 						eDebugNoSimulate("[SEC] locked step %d ok (%d %d)", cmd.okcount, signal, cmd.lastSignal);
