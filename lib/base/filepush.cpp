@@ -7,11 +7,11 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/vfs.h>
-//#if 0
-//#include <dirent.h>
-//#else
+#if 0
+#include <dirent.h>
+#else
 #include <sys/types.h>
-//#endif
+#endif
 
 #define PVR_COMMIT 1
 
