@@ -1,18 +1,17 @@
 #include <lib/base/filepush.h>
 #include <lib/base/eerror.h>
 #include <lib/base/nconfig.h>
-//#include <sys/sysmacros.h>
+#include <sys/sysmacros.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/vfs.h>
-#if 0
-#include <dirent.h>
-#else
+//#if 0
+//#include <dirent.h>
+//#else
 #include <sys/types.h>
-#include <sys/sysmacros.h>
-#endif
+//#endif
 
 #define PVR_COMMIT 1
 
