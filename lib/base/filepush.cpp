@@ -5,8 +5,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/vfs.h>
-#include <sys/sysmacros.h>
-#include <stdlib.h>
 #if 0
 #include <dirent.h>
 #else
@@ -14,6 +12,8 @@
 #endif
 
 #define PVR_COMMIT 1
+
+#include <sys/sysmacros.h>
 
 #define MAJORSD_	8
 #define MAJORMMCBLK	179
