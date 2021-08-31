@@ -7,6 +7,7 @@
 #include <lib/base/message.h>
 #include <sys/types.h>
 #include <lib/base/rawfile.h>
+#include <sys/sysmacros.h>
 
 class iFilePushScatterGather
 {
