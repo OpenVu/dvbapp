@@ -367,8 +367,8 @@ RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters 
 			diff = 1<<27;
 		else
 		{
-			diff = abs(sat.frequency - osat.frequency);
-			diff += abs(sat.symbol_rate - osat.symbol_rate);
+			diff = abs(static_cast<int>(sat.frequency - osat.frequency));
+			diff += abs(static_cast<int>(sat.symbol_rate - osat.symbol_rate));
 		}
 		return 0;
 	}
@@ -385,8 +385,8 @@ RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters 
 			diff = 1 << 27;
 		else
 		{
-			diff = abs(cable.frequency - ocable.frequency);
-			diff += abs(cable.symbol_rate - ocable.symbol_rate);
+			diff = abs(static_cast<int>(cable.frequency - ocable.frequency));
+			diff += abs(static_cast<int>(cable.symbol_rate - ocable.symbol_rate));
 		}
 		return 0;
 	case iDVBFrontend::feTerrestrial:
@@ -427,7 +427,7 @@ RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters 
 			oterrestrial.plpid != terrestrial.plpid)
 			diff = 1 << 30;
 		else
-			diff = abs(terrestrial.frequency - oterrestrial.frequency) / 1000;
+			diff = abs(static_cast<int>(terrestrial.frequency - oterrestrial.frequency)) / 1000;
 		return 0;
 	default:
 		return -1;
@@ -1760,7 +1760,7 @@ int eDVBFrontend::tuneLoopInt()  // called by m_tuneTimer
 				if ( !m_simulate && (idx == 0 || idx == 1) )
 				{
 					int idle = sec_fe->readInputpower();
-					int diff = abs(idle-m_idleInputpower[idx]);
+					int diff = abs(static_cast<int>(idle-m_idleInputpower[idx]));
 					if ( diff > 0)
 					{
 						eDebugNoSimulate("measure idle(%d) was not okay.. (%d - %d = %d) retry", idx, m_idleInputpower[idx], idle, diff);
@@ -1785,7 +1785,7 @@ int eDVBFrontend::tuneLoopInt()  // called by m_tuneTimer
 				--m_timeoutCount;
 				if (!m_timeoutCount && m_retryCount > 0)
 					--m_retryCount;
-				if (isLocked && ((abs((signal = readFrontendData(signalQualitydB)) - cmd.lastSignal) < 40) || !cmd.lastSignal))
+				if (isLocked && ((abs((static_cast<int>(signal = readFrontendData(signalQualitydB)) - cmd.lastSignal) < 40) || !cmd.lastSignal)))
 				{
 					if (cmd.lastSignal)
 						eDebugNoSimulate("[SEC] locked step %d ok (%d %d)", cmd.okcount, signal, cmd.lastSignal);
@@ -1852,8 +1852,8 @@ int eDVBFrontend::tuneLoopInt()  // called by m_tuneTimer
 					m_runningInputpower,
 					idleInputpower,
 					cmd.deltaA);
-				if ( (cmd.direction && abs(m_runningInputpower - idleInputpower) >= cmd.deltaA)
-					|| (!cmd.direction && abs(m_runningInputpower - idleInputpower) <= cmd.deltaA) )
+				if ( (cmd.direction && abs(static_cast<int>(m_runningInputpower - idleInputpower)) >= cmd.deltaA)
+					|| (!cmd.direction && abs(static_cast<int>(m_runningInputpower - idleInputpower)) <= cmd.deltaA) )
 				{
 					++cmd.okcount;
 					eDebugNoSimulate("[SEC] rotor %s step %d ok", txt, cmd.okcount);
