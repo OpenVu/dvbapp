@@ -334,7 +334,7 @@ RESULT eDVBFrontendParameters::setDVBT(const eDVBFrontendParametersTerrestrial &
 	return 0;
 }
 
-RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters *parm, int &diff, bool exact) const
+RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters *parm, unsigned int &diff, bool exact) const
 {
 	if (!parm)
 		return -1;
