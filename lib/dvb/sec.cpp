@@ -4,9 +4,10 @@
 #include <lib/dvb/dvbtime.h>
 #include <lib/base/eerror.h>
 #include <set>
-
+#include <stdlib.h>
 //#define SEC_DEBUG
 
+#include "absdiff.h"
 #ifdef SEC_DEBUG
 #define eSecDebug(arg...) eDebug(arg)
 #else
@@ -196,7 +197,7 @@ int eDVBSatelliteEquipmentControl::canTune(const eDVBFrontendParametersSatellite
 				}
 
 				if (ret && rotor && rotor_pos != -1)
-					ret -= abs(rotor_pos-sat.orbital_position);
+					ret -= abs(static_cast<int>(rotor_pos-sat.orbital_position));
 
 				eSecDebugNoSimulate("ret5 %d", ret);
 
@@ -204,7 +205,7 @@ int eDVBSatelliteEquipmentControl::canTune(const eDVBFrontendParametersSatellite
 				{
 					int lof = sat.frequency > lnb_param.m_lof_threshold ?
 						lnb_param.m_lof_hi : lnb_param.m_lof_lo;
-					int tuner_freq = abs(sat.frequency - lof);
+					int tuner_freq = abs(static_cast<int>(sat.frequency - lof));
 					if (tuner_freq < 900000 || tuner_freq > 2200000)
 						ret = 0;
 				}
@@ -364,8 +365,7 @@ RESULT eDVBSatelliteEquipmentControl::prepare(iDVBFrontend &frontend, FRONTENDPA
 			if(!is_unicable)
 			{
 				// calc Frequency
-				int local= abs(sat.frequency
-					- lof);
+				int local= abs(static_cast<int>(sat.frequency - lof));
 				parm.frequency = ((((local * 2) / 125) + 1) / 2) * 125;
 				frontend.setData(eDVBFrontend::FREQ_OFFSET, sat.frequency - parm.frequency);
 
@@ -392,8 +392,8 @@ RESULT eDVBSatelliteEquipmentControl::prepare(iDVBFrontend &frontend, FRONTENDPA
 						{
 							eDebug("[prepare] JESS");
 
-							int tmp1 = abs(sat.frequency
-								-lof)
+							int tmp1 = abs(static_cast<int>(sat.frequency
+								-lof))
 								- 100000;
 							volatile unsigned int tmp2 = (1000 + 2 * tmp1) / (2 *1000); //round to multiple of 1000
 							parm.frequency = lnb_param.SatCRvco - (tmp1 - (1000 * tmp2));
@@ -412,8 +412,8 @@ RESULT eDVBSatelliteEquipmentControl::prepare(iDVBFrontend &frontend, FRONTENDPA
 					default:
 						{
 							eDebug("[prepare] Unicable");
-							int tmp1 = abs(sat.frequency
-								-lof)
+							int tmp1 = abs(static_cast<int>(sat.frequency
+								-lof))
 								+ lnb_param.SatCRvco
 								- 1400000
 								+ lnb_param.guard_offset;
@@ -524,7 +524,7 @@ RESULT eDVBSatelliteEquipmentControl::prepare(iDVBFrontend &frontend, FRONTENDPA
 						eDebugNoSimulate("Entry for %d,%d? not in Rotor Table found... i try gotoXX?", sat.orbital_position / 10, sat.orbital_position % 10 );
 						useGotoXX = true;
 
-						double	SatLon = abs(sat.orbital_position)/10.00,
+						double	SatLon = abs(static_cast<int>(sat.orbital_position))/10.00,
 								SiteLat = rotor_param.m_gotoxx_parameters.m_latitude,
 								SiteLon = rotor_param.m_gotoxx_parameters.m_longitude;
 
@@ -969,7 +969,7 @@ RESULT eDVBSatelliteEquipmentControl::prepare(iDVBFrontend &frontend, FRONTENDPA
 				{
 					if (curRotorPos != -1)
 					{
-						mrt = abs(curRotorPos - sat.orbital_position);
+						mrt = abs(static_cast<int>(curRotorPos - sat.orbital_position));
 						if (mrt > 1800)
 							mrt = 3600 - mrt;
 						if (mrt % 10)
@@ -1583,9 +1583,9 @@ struct sat_compare
 	{
 		if (orb_pos == cmp.orb_pos)
 		{
-			if ( abs(lofl-cmp.lofl) < 200000 )
+			if ( abs(static_cast<int>(lofl-cmp.lofl)) < 200000 )
 			{
-				if (abs(lofh-cmp.lofh) < 200000)
+				if (abs(static_cast<int>(lofh-cmp.lofh)) < 200000)
 					return false;
 				return lofh<cmp.lofh;
 			}

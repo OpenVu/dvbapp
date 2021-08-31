@@ -277,8 +277,8 @@ RESULT eDVBScan::startFilter()
 				{
 					eDVBFrontendParametersCable parm;
 					m_ch_current->getDVBC(parm);
-					if ((tsid == 0x00d7 && abs(parm.frequency-618000) < 2000) ||
-						(tsid == 0x00d8 && abs(parm.frequency-626000) < 2000))
+					if ((tsid == 0x00d7 && absdiff(parm.frequency-618000) < 2000) ||
+						(tsid == 0x00d8 && absdiff(parm.frequency-626000) < 2000))
 						tsid = -1;
 				}
 			}
@@ -701,10 +701,10 @@ void eDVBScan::channelDone()
 						eDVBFrontendParametersSatellite p;
 						m_ch_current->getDVBS(p);
 
-						if ( abs(p.orbital_position - sat.orbital_position) < 5 )
+						if ( absdiff(p.orbital_position - sat.orbital_position) < 5 )
 							sat.orbital_position = p.orbital_position;
 
-						if ( abs(abs(3600 - p.orbital_position) - sat.orbital_position) < 5 )
+						if ( absdiff(absdiff(3600 - p.orbital_position) - sat.orbital_position) < 5 )
 						{
 							SCAN_eDebug("found transponder with incorrect west/east flag ... correct this");
 							sat.orbital_position = p.orbital_position;
