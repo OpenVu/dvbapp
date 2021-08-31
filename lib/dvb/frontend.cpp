@@ -12,6 +12,7 @@
 #include <sstream>
 #include <stdlib.h>
 
+#include "absdiff.h"
 #ifndef I2C_SLAVE_FORCE
 #define I2C_SLAVE_FORCE	0x0706
 #endif
@@ -334,7 +335,7 @@ RESULT eDVBFrontendParameters::setDVBT(const eDVBFrontendParametersTerrestrial &
 	return 0;
 }
 
-RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters *parm, unsigned int &diff, bool exact) const
+RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters *parm, int &diff, bool exact) const
 {
 	if (!parm)
 		return -1;
