@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 #include <sstream>
+#include <stdlib.h>
 
 #ifndef I2C_SLAVE_FORCE
 #define I2C_SLAVE_FORCE	0x0706
