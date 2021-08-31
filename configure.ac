@@ -11,12 +11,19 @@ AC_SYS_LARGEFILE
 
 AC_PROG_CC
 AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX_11
 m4_ifdef([LT_INIT], [LT_INIT], [AC_PROG_LIBTOOL])
 AC_CONFIG_MACRO_DIR([m4])
+AC_OPENMP()
 
 AC_CHECK_HEADERS([dbox/fp.h dbox/lcd-ks0713.h])
 
 AC_PATH_PROG(MSGFMT, msgfmt, AC_MSG_ERROR(Could not find msgfmt))
+AC_PATH_PROG(MSGINIT, msginit, AC_MSG_ERROR(Could not find msginit))
+AC_PATH_PROG(MSGMERGE, msgmerge, AC_MSG_ERROR(Could not find msgmerge))
+AC_PATH_PROG(MSGUNIQ, msguniq, AC_MSG_ERROR(Could not find msguniq))
+AC_PATH_PROG(MSGATTRIB, msgattrib, AC_MSG_ERROR(Could not find msgattrib))
+AC_PATH_PROG(XGETTEXT, xgettext, AC_MSG_ERROR(Could not find xgettext))
 
 AM_PATH_PYTHON
 AX_PYTHON_DEVEL
