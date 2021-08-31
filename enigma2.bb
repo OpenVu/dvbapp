@@ -1,75 +1,52 @@
 DESCRIPTION = "Enigma2 is an experimental, but useful framebuffer-based frontend for DVB functions"
-DESCRIPTION_append_enigma2-plugin-extensions-cutlisteditor = "enables you to cut your movies."
-DESCRIPTION_append_enigma2-plugin-extensions-graphmultiepg = "shows a graphical timeline EPG."
-DESCRIPTION_append_enigma2-plugin-extensions-pictureplayer = "displays photos on the TV."
-DESCRIPTION_append_enigma2-plugin-systemplugins-frontprocessorupdate = "keeps your frontprocessor up to date."
-DESCRIPTION_append_enigma2-plugin-systemplugins-positionersetup = "helps you installing a motorized dish."
-DESCRIPTION_append_enigma2-plugin-systemplugins-satelliteequipmentcontrol = "allows you to fine-tune DiSEqC-settings."
-DESCRIPTION_append_enigma2-plugin-systemplugins-satfinder = "helps you to align your dish."
-DESCRIPTION_append_enigma2-plugin-systemplugins-skinselector = "shows a menu with selectable skins."
-DESCRIPTION_append_enigma2-plugin-systemplugins-videomode = "selects advanced video modes"
-DESCRIPTION_append_enigma2-plugin-systemplugins-crashlogautosubmit = "automatically send crashlogs to Dream Multimedia"
-DESCRIPTION_append_enigma2-plugin-systemplugins-cleanupwizard = "informs you on low internal memory on system startup."
-DESCRIPTION_append_enigma2-plugin-extenstions-modem = "opens a menu to connect to internet via builtin modem."
-DESCRIPTION_append_enigma2-plugin-systemplugins-wirelesslan = "helps you configuring your wireless lan"
-DESCRIPTION_append_enigma2-plugin-systemplugins-networkwizard = "provides easy step by step network configuration"
+MAINTAINER = "OpenATV"
+LICENSE = "GPLv2"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-DEPENDS = "jpeg libungif libpng libsigc++-1.2 gettext-native \
-        dreambox-dvbincludes freetype libdvbsi++ python swig-native \
-        libfribidi libxmlccwrap libdreamdvd gstreamer gst-plugin-dvbmediasink \
-        gst-plugins-bad gst-plugins-good gst-plugins-ugly python-wifi"
+inherit gitpkgv externalsrc
 
-RDEPENDS = "python-codecs python-core python-lang python-re python-threading \
-        python-xml python-fcntl gst-plugin-decodebin gst-plugin-decodebin2 python-stringold \
-        python-pickle gst-plugin-app \
-        gst-plugin-id3demux gst-plugin-mad gst-plugin-ogg gst-plugin-playbin \
-        gst-plugin-typefindfunctions gst-plugin-audioconvert gst-plugin-audioresample \
-        gst-plugin-wavparse python-netclient gst-plugin-mpegstream gst-plugin-selector \
-        gst-plugin-flac gst-plugin-dvbmediasink gst-plugin-mpegdemux \
-        gst-plugin-souphttpsrc gst-plugin-mpegaudioparse gst-plugin-subparse \
-        gst-plugin-apetag gst-plugin-icydemux gst-plugin-autodetect \
-        glibc-gconv-iso8859-15 ethtool"
+S = "${FILE_DIRNAME}"
+WORKDIR = "${S}/build"
 
-GST_ALSA_RDEPENDS = "gst-plugin-alsa alsa-conf"
-GST_DVD_RDEPENDS = "gst-plugin-cdxaparse gst-plugin-cdio gst-plugin-vcdsrc"
-GST_MISC_RDEPENDS = "gst-plugin-matroska gst-plugin-qtdemux gst-plugin-vorbis gst-plugin-audioparsersbad"
-GST_RTSP_RDEPENDS = "gst-plugin-udp gst-plugin-rtsp gst-plugin-rtp gst-plugin-rtpmanager"
-GST_BASE_RDEPENDS = "${GST_ALSA_RDEPENDS} ${GST_MISC_RDEPENDS} ${GST_RTSP_RDEPENDS}"
+PV = "2.7+git"
+PKGV = "2.7+git${GITPKGV}"
+PR = "r26"
 
-RDEPENDS_append_dm800 = " ${GST_BASE_RDEPENDS} gst-plugin-ivorbisdec"
-RDEPENDS_append_dm8000 = " ${GST_BASE_RDEPENDS} ${GST_DVD_RDEPENDS} gst-plugin-avi"
-RDEPENDS_append_dm500hd = " ${GST_BASE_RDEPENDS} ${GST_DVD_RDEPENDS} gst-plugin-avi"
-RDEPENDS_append_dm800se = " ${GST_BASE_RDEPENDS} ${GST_DVD_RDEPENDS} gst-plugin-avi"
+FILES_${PN} += "${datadir}/keymaps"
+FILES_${PN}-meta = "${datadir}/meta"
+PACKAGES =+ "${PN}-src"
+PACKAGES += "${PN}-meta"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-RDEPENDS_enigma2-plugin-extensions-cutlisteditor = "aio-grab"
-RDEPENDS_enigma2-plugin-extensions-dvdplayer = "libdreamdvd0"
-RDEPENDS_enigma2-plugin-systemplugins-nfiflash = "python-twisted-web"
-RDEPENDS_enigma2-plugin-systemplugins-softwaremanager = "python-twisted-web"
-RDEPENDS_enigma2-plugin-systemplugins-crashlogautosubmit = "twisted-mail twisted-names python-compression python-mime python-email"
-RDEPENDS_enigma2-plugin-extensions-modem = "dreambox-modem-ppp-scripts ppp"
-RDEPENDS_enigma2-plugin-systemplugins-wirelesslan = "wpa-supplicant wireless-tools python-wifi"
+inherit autotools-brokensep pkgconfig pythonnative
 
-RCONFLICTS_enigma2-plugin-systemplugins-softwaremanager = "enigma2-plugin-systemplugins-configurationbackup enigma2-plugin-systemplugins-softwareupdate"
-RREPLACES_enigma2-plugin-systemplugins-softwaremanager = "enigma2-plugin-systemplugins-configurationbackup enigma2-plugin-systemplugins-softwareupdate"
+do_unpack[noexec] = "1"
+do_patch[no_exec] = "1"
+do_populate_sysroot[noexec] = "1"
+do_populate_lic[noexec] = "1"
+do_packagedata[noexec] = "1"
+do_package_write_ipk[noexec] = "1"
+do_rm_work[noexec] = "1"
+do_rm_work_all[noexec] = "1"
 
-PV = "${GITVER}"
-
-inherit srctree autotools gitver pkgconfig
+bindir = "/usr/bin"
+sbindir = "/usr/sbin"
 
 EXTRA_OECONF = " \
+    EXTRA_OECONF = " \
         BUILD_SYS=${BUILD_SYS} \
         HOST_SYS=${HOST_SYS} \
         STAGING_INCDIR=${STAGING_INCDIR} \
         STAGING_LIBDIR=${STAGING_LIBDIR} \
 "
 
-PACKAGE_ARCH = "${MACHINE_ARCH}"
-PACKAGES += "${PN}-meta"
+LDFLAGS_prepend = "${@bb.utils.contains('GST_VERSION', '1.0', ' -lxml2 ', '', d)}"
 
-FILES_${PN} += "${datadir}/fonts"
-FILES_${PN}-meta = "${datadir}/meta"
+do_install_append() {
+    install -d ${D}/usr/share/keymaps
+}
 
 python populate_packages_prepend () {
-        enigma2_plugindir = bb.data.expand('${libdir}/enigma2/python/Plugins', d)
-        do_split_packages(d, enigma2_plugindir, '(.*?/.*?)/.*', 'enigma2-plugin-%s', '%s ', recursive=True, match_path=True, prepend=True)
+    enigma2_plugindir = bb.data.expand('${libdir}/enigma2/python/Plugins', d)
+    do_split_packages(d, enigma2_plugindir, '(.*?/.*?)/.*', 'enigma2-plugin-%s', '%s ', recursive=True, match_path=True, prepend=True, extra_depends="enigma2")
 }
