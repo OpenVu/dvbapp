@@ -9,6 +9,7 @@
 #include <dirent.h>
 #else
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #endif
 
 #define PVR_COMMIT 1
