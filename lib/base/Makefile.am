@@ -27,7 +27,8 @@ libenigma_base_a_SOURCES = \
 	thread.cpp \
 	httpstream.cpp \
 	socketbase.cpp \
-	freesatv2.cpp
+	freesatv2.cpp \
+	wrappers.cpp
 
 EXTRA_DIST = \
 	eenv.cpp.in
@@ -59,4 +60,5 @@ baseinclude_HEADERS = \
 	thread.h \
 	httpstream.h \
 	socketbase.h \
-	freesatv2.h 
+	freesatv2.h \
+	wrappers.h
