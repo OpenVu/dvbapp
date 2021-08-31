@@ -18,6 +18,8 @@
 #include <lib/base/estring.h>
 #include <lib/python/python.h>
 #include <errno.h>
+#include <stdlib.h>
+#include "absdiff.h"
 
 #define SCAN_eDebug(x...) do { if (m_scan_debug) eDebug(x); } while(0)
 #define SCAN_eDebugNoNewLine(x...) do { if (m_scan_debug) eDebugNoNewLine(x); } while(0)
@@ -76,14 +78,14 @@ int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTr
 		ret = tsid != 0x4321;
 		break;
 	case 0x0002:
-		ret = abs(orbital_position-282) < 6 && tsid != 2019;
+		ret = absdiff(orbital_position-282) < 6 && tsid != 2019;
 		// 12070H and 10936V have same tsid/onid.. but even the same services are provided
 		break;
 	case 0x2000:
 		ret = tsid != 0x1000;
 		break;
 	case 0x5E: // Sirius 4.8E 12322V and 12226H
-		ret = abs(orbital_position-48) < 3 && tsid != 1;
+		ret = absdiff(orbital_position-48) < 3 && tsid != 1;
 		break;
 	case 10100: // Eutelsat W7 36.0E 11644V and 11652V
 		ret = orbital_position != 360 || tsid != 10187;
@@ -99,7 +101,7 @@ int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTr
 		ret = (orbital_position != 685 && orbital_position != 3560) || tsid != 1;
 		break;
 	case 70: // Thor 0.8W 11862H 12341V
-		ret = abs(orbital_position-3592) < 3 && tsid != 46;
+		ret = absdiff(orbital_position-3592) < 3 && tsid != 46;
 		break;
 	case 32: // NSS 806 (40.5W) 4059R, 3774L
 		ret = orbital_position != 3195 || tsid != 21;
@@ -874,7 +876,7 @@ void eDVBScan::channelDone()
 							parm.frequency/1000,
 							parm.polarisation ? 'V' : 'H',
 							m_pmt_in_progress->first);
-					snprintf(pname, 255, "%s %s %d%c %d.%d°%c",
+					snprintf(pname, 255, "%s %s %d%c %d.%dï¿½%c",
 						parm.system ? "DVB-S2" : "DVB-S",
 						parm.modulation == 1 ? "QPSK" : "8PSK",
 						parm.frequency/1000,
