@@ -48,9 +48,8 @@ enigma2_LDADD = \
 	@LIBSDL_LIBS@ \
 	@LIBXINE_LIBS@ \
 	@LIBXMLCCWRAP_LIBS@ \
-	@PTHREAD_LIBS@ \
-	@PYTHON_LDFLAGS@
-
+	@PTHREAD_LIBS@
+	
 enigma2_LDFLAGS = -Wl,--export-dynamic
 
 if HAVE_GIT_DIR
