@@ -876,7 +876,7 @@ void eDVBScan::channelDone()
 							parm.frequency/1000,
 							parm.polarisation ? 'V' : 'H',
 							m_pmt_in_progress->first);
-					snprintf(pname, 255, "%s %s %d%c %d.%d�%c",
+					snprintf(pname, 255, "%s %s %d%c %d.%d°%c",
 						parm.system ? "DVB-S2" : "DVB-S",
 						parm.modulation == 1 ? "QPSK" : "8PSK",
 						parm.frequency/1000,
