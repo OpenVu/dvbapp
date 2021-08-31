@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/vfs.h>
+#include <sys/sysmacros.h>
 #if 0
 #include <dirent.h>
 #else
