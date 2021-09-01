@@ -6,7 +6,6 @@
 
 #include <string>
 #include <lib/base/object.h>
-#include "Python.h"
 
 #if !defined(SKIP_PART1) && !defined(SWIG)
 class ePyObject
