@@ -6,7 +6,7 @@
 
 class eSocketNotifier;
 
-class eHdmiCEC: public Object
+class eHdmiCEC: public sigc::trackable
 {
 #ifndef SWIG
 public:

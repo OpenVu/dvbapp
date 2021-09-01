@@ -1219,20 +1219,20 @@ int eDVBServicePMTHandler::tuneExt(eServiceReferenceDVB &ref, int use_decode_dem
 		if (m_channel)
 		{
 			m_channel->connectStateChange(
-				slot(*this, &eDVBServicePMTHandler::channelStateChanged), 
+				sigc::mem_fun(*this, &eDVBServicePMTHandler::channelStateChanged), 
 				m_channelStateChanged_connection);
 			m_last_channel_state = -1;
 			channelStateChanged(m_channel);
 	
 			m_channel->connectEvent(
-				slot(*this, &eDVBServicePMTHandler::channelEvent), 
+				sigc::mem_fun(*this, &eDVBServicePMTHandler::channelEvent), 
 				m_channelEvent_connection);
 
 			if (ref.path.empty())
 			{
 				m_dvb_scan = 0;
 				m_dvb_scan = new eDVBScan(m_channel, true, false);
-				m_dvb_scan->connectEvent(slot(*this, &eDVBServicePMTHandler::SDTScanEvent), m_scan_event_connection);
+				m_dvb_scan->connectEvent(sigc::mem_fun(*this, &eDVBServicePMTHandler::SDTScanEvent), m_scan_event_connection);
 			}
 		} else
 		{
@@ -1436,7 +1436,7 @@ RESULT eDVBCAService::unregister_service( const eServiceReferenceDVB &ref, int d
 
 void eDVBCAService::registerChannelCallback(eDVBResourceManager *res_mgr)
 {
-	res_mgr->connectChannelAdded(slot(&DVBChannelAdded), m_chanAddedConn);
+	res_mgr->connectChannelAdded(sigc::mem_fun(&DVBChannelAdded), m_chanAddedConn);
 }
 
 void eDVBCAService::DVBChannelAdded(eDVBChannel *chan)
@@ -1449,7 +1449,7 @@ void eDVBCAService::DVBChannelAdded(eDVBChannel *chan)
 		data->m_prevChannelState = -1;
 		data->m_dataDemux = -1;
 		exist_channels[chan] = data;
-		chan->connectStateChange(slot(&DVBChannelStateChanged), data->m_stateChangedConn);
+		chan->connectStateChange(sigc::mem_fun(&DVBChannelStateChanged), data->m_stateChangedConn);
 	}
 }
 

@@ -16,7 +16,7 @@ public:
 	virtual ~iFilePushScatterGather() {}
 };
 
-class eFilePushThread: public eThread, public Object
+class eFilePushThread: public eThread, public sigc::trackable
 {
 	int prio_class, prio;
 public:
@@ -43,7 +43,7 @@ public:
 	void setScatterGather(iFilePushScatterGather *);
 	
 	enum { evtEOF, evtReadError, evtWriteError, evtUser };
-	Signal1<void,int> m_event;
+	sigc::signal1<void,int> m_event;
 
 	void installSigUSR1Handler();
 	void before_set_thread_alive();

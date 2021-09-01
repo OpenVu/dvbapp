@@ -73,7 +73,7 @@ void DumpUnfreed()
 #endif
 
 SigC::Connection logConnection;
-Signal2<void, int, const std::string&> logOutput;
+sigc::signal2<void, int, const std::string&> logOutput;
 int logOutputConsole=1;
 
 static pthread_mutex_t DebugLock =

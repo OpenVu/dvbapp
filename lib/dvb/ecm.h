@@ -9,7 +9,7 @@
 #include <map>
 
 
-class eDVBECMParser: public iObject, public ePESParser, public Object
+class eDVBECMParser: public iObject, public ePESParser, public sigc::trackable
 {
 	DECLARE_REF(eDVBECMParser);
 public:

@@ -42,7 +42,7 @@ public:
 	void *getData() { return data; }
 };
 
-struct channel_data: public Object
+struct channel_data: public sigc::trackable
 {
 	ePtr<eDVBChannel> m_channel;
 	ePtr<eConnection> m_stateChangedConn;
@@ -55,7 +55,7 @@ struct channel_data: public Object
 typedef std::map<eServiceReferenceDVB, eDVBCAService*> CAServiceMap;
 typedef std::map<iDVBChannel*, channel_data*> ChannelMap;
 
-class eDVBCAService: public Object
+class eDVBCAService: public sigc::trackable
 {
 	eIOBuffer m_buffer;
 	ePtr<eSocketNotifier> m_sn;
@@ -111,7 +111,7 @@ typedef std::list<HbbTVApplicationInfo *> HbbTVApplicationInfoList;
 typedef HbbTVApplicationInfoList::iterator HbbTVApplicationInfoListIterator;
 typedef HbbTVApplicationInfoList::const_iterator HbbTVApplicationInfoListConstIterator;
 
-class eDVBServicePMTHandler: public Object
+class eDVBServicePMTHandler: public sigc::trackable
 {
 #ifndef SWIG
 	friend class eDVBCAService;
@@ -195,7 +195,7 @@ public:
 		eventChannelAllocated,
 	};
 #ifndef SWIG
-	Signal1<void,int> serviceEvent;
+	sigc::signal1<void,int> serviceEvent;
 
 	struct videoStream
 	{
