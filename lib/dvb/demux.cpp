@@ -27,22 +27,6 @@
 #include <lib/dvb/esection.h>
 #include <lib/dvb/decoder.h>
 
-#ifndef DMX_SET_SOURCE
-/**
- * DMX_SET_SOURCE and dmx_source enum removed on 4.14 kernel
- * Check commit 13adefbe9e566c6db91579e4ce17f1e5193d6f2c
-**/
-enum dmx_source {
-	DMX_SOURCE_FRONT0 = 0,
-	DMX_SOURCE_FRONT1,
-	DMX_SOURCE_FRONT2,
-	DMX_SOURCE_FRONT3,
-	DMX_SOURCE_DVR0   = 16,
-	DMX_SOURCE_DVR1,
-	DMX_SOURCE_DVR2,
-	DMX_SOURCE_DVR3
-};
-
 eDVBDemux::eDVBDemux(int adapter, int demux): adapter(adapter), demux(demux)
 {
 	m_dvr_busy = 0;
