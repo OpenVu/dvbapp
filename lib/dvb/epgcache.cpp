@@ -526,7 +526,7 @@ void eEPGCache::sectionRead(const __u8 *data, int source, channel_data *channel)
 		channel->haveData |= source;
 
 	singleLock s(cache_lock);
-	// hier wird immer eine eventMap zur�ck gegeben.. entweder eine vorhandene..
+	// hier wird immer eine eventMap zurück gegeben.. entweder eine vorhandene..
 	// oder eine durch [] erzeugte
 	std::pair<eventMap,timeMap> &servicemap = eventDB[service];
 	eventMap::iterator prevEventIt = servicemap.first.end();
