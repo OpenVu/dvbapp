@@ -48,7 +48,8 @@ enigma2_LDADD = \
 	@LIBSDL_LIBS@ \
 	@LIBXINE_LIBS@ \
 	@LIBXMLCCWRAP_LIBS@ \
-	@PTHREAD_LIBS@
+	@PTHREAD_LIBS@ \
+	@PYTHON_LDFLAGS@
 	
 enigma2_LDFLAGS = -Wl,--export-dynamic
 
