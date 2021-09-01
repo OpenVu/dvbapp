@@ -3,7 +3,7 @@
 
 #include <lib/base/httpstream.h>
 #include <lib/base/eerror.h>
-#include <lib/base/wrappers.h>
+//#include <lib/base/wrappers.h>
 
 DEFINE_REF(eHttpStream);
 
