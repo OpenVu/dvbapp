@@ -1,4 +1,4 @@
-SUBDIRS = countries fonts defaults extensions keymaps rc
+SUBDIRS = countries fonts defaults extensions skin_default keymaps rc
 
 dist_pkgdata_DATA = \
 	defaultsatlists.xml \
@@ -12,7 +12,6 @@ dist_pkgdata_DATA = \
 	rcpositions.xml \
 	setup.xml \
 	skin_default.xml \
-	skin.xml \
 	startwizard.xml \
 	tutorialwizard.xml \
 	unicable.xml
