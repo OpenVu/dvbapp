@@ -2,6 +2,7 @@ from re import compile as re_compile
 from os import path as os_path, listdir
 from MenuList import MenuList
 from Components.Harddisk import harddiskmanager
+from Components.config import config
 
 from Tools.Directories import SCOPE_CURRENT_SKIN, resolveFilename, fileExists
 
@@ -291,7 +292,10 @@ def MultiFileSelectEntryComponent(name, absolute = None, isDir = False, selected
 	if not name.startswith('<'):
 		if selected is False:
 			icon = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/lock_off.png"))
-			res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 2, 0, 25, 25, icon))
+			if config.skin.xres.value == 1920:
+				res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 2, 5, 25, 25, icon))
+			else:
+				res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 2, 0, 25, 25, icon))
 		else:
 			icon = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/lock_on.png"))
 			x, y, w, h = skin.parameters.get("FileListMultiLock",(2, 0, 25, 25))

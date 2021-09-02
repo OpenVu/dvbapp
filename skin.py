@@ -6,7 +6,7 @@ from os import path
 profile("LOAD:enigma_skin")
 from enigma import eSize, ePoint, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, \
 	addFont, gRGB, eWindowStyleSkinned
-from Components.config import ConfigSubsection, ConfigText, config
+from Components.config import ConfigSubsection, ConfigText, ConfigInteger, config
 from Components.Converter.Converter import Converter
 from Components.Sources.Source import Source, ObsoleteSource
 from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_SKIN_IMAGE, SCOPE_FONTS, SCOPE_CURRENT_SKIN, SCOPE_CONFIG, fileExists
@@ -17,7 +17,7 @@ colorNames = dict()
 
 fonts = {
 	"Body": ("Regular", 18, 22, 16),
-	"ChoiceList": ("Regular", 20, 24, 18),
+	"ChoiceList": ("Regular", 20, 25, 18),
 }
 
 parameters = {}
@@ -58,6 +58,7 @@ def loadSkin(name, scope = SCOPE_SKIN):
 # example: loadSkin("nemesis_greenline/skin.xml")
 config.skin = ConfigSubsection()
 config.skin.primary_skin = ConfigText(default = "skin.xml")
+config.skin.xres = ConfigInteger(default = 0)
 
 profile("LoadSkin")
 try:
@@ -106,27 +107,63 @@ def evalPos(pos, wsize, ssize, scale):
 	if pos == "center":
 		pos = (ssize - wsize) / 2
 	else:
-		pos = int(pos) * scale[0] / scale[1]
-	return int(pos)
+		sl = len(str)
+		l = 1
 
-def parsePosition(str, scale, desktop = None, size = None):
+		if str[0] is 'e':
+			val = e
+		elif str[0] is 'c':
+			val = e/2
+		else:
+			val = 0;
+			l = 0
+
+		if sl - l > 0:
+			if str[sl-1] is '%':
+				val += e * int(str[l:sl-1]) / 100
+			else:
+				val += int(str[l:sl])
+	if val < 0:
+		val = 0
+	return val
+
+def getParentSize(object, desktop):
+	size = eSize()
+	if object:
+		parent = object.getParent()
+		# For some widgets (e.g. ScrollLabel) the skin attributes are applied to
+		# a child widget, instead of to the widget itself. In that case, the parent
+		# we have here is not the real parent, but it is the main widget.
+		# We have to go one level higher to get the actual parent.
+		# We can detect this because the 'parent' will not have a size yet
+		# (the main widget's size will be calculated internally, as soon as the child
+		# widget has parsed the skin attributes)
+		if parent and parent.size().isEmpty():
+			parent = parent.getParent()
+		if parent:
+			size = parent.size()
+		elif desktop:
+			#widget has no parent, use desktop size instead for relative coordinates
+			size = desktop.size()
+	return size
+
+def parsePosition(str, scale, object = None, desktop = None, size = None):
 	x, y = str.split(',')
-	
-	wsize = 1, 1
-	ssize = 1, 1
-	if desktop is not None:
-		ssize = desktop.size().width(), desktop.size().height()
-	if size is not None:
-		wsize = size.width(), size.height()
+	parentsize = eSize()
+	if object and (x[0] in ['c', 'e'] or y[0] in ['c', 'e']):
+		parentsize = getParentSize(object, desktop)
+	xval = parseCoordinate(x, parentsize.width(), size and size.width())
+	yval = parseCoordinate(y, parentsize.height(), size and size.height())
+	return ePoint(xval * scale[0][0] / scale[0][1], yval * scale[1][0] / scale[1][1])
 
-	x = evalPos(x, wsize[0], ssize[0], scale[0])
-	y = evalPos(y, wsize[1], ssize[1], scale[1])
-
-	return ePoint(x, y)
-
-def parseSize(str, scale):
+def parseSize(str, scale, object = None, desktop = None):
 	x, y = str.split(',')
-	return eSize(int(x) * scale[0][0] / scale[0][1], int(y) * scale[1][0] / scale[1][1])
+	parentsize = eSize()
+	if object and (x[0] in ['c', 'e'] or y[0] in ['c', 'e']):
+		parentsize = getParentSize(object, desktop)
+	xval = parseCoordinate(x, parentsize.width())
+	yval = parseCoordinate(y, parentsize.height())
+	return eSize(xval * scale[0][0] / scale[0][1], yval * scale[1][0] / scale[1][1])
 
 def parseFont(s, scale):
 	try:
@@ -195,7 +232,7 @@ class AttributeParser:
 	def __init__(self, guiObject, desktop, scale = ((1,1),(1,1))):
 		self.guiObject = guiObject
 		self.desktop = desktop
-		self.scale = scale
+		self.scaleTuple = scale
 	def applyOne(self, attrib, value):
 		try:
 			getattr(self, attrib)(value)
@@ -215,12 +252,12 @@ class AttributeParser:
 		if isinstance(value, tuple):
 			self.guiObject.move(ePoint(*value))
 		else:
-			self.guiObject.move(parsePosition(value, self.scale, self.desktop, self.guiObject.csize()))
+			self.guiObject.move(parsePosition(value, self.scaleTuple, self.desktop, self.guiObject.csize()))
 	def size(self, value):
 		if isinstance(value, tuple):
 			self.guiObject.resize(eSize(*value))
 		else:
-			self.guiObject.resize(parseSize(value, self.scale))
+			self.guiObject.resize(parseSize(value, self.scaleTuple))
 	def animationPaused(self, value):
 		pass
 	def animationPaused(self, value):
@@ -237,7 +274,7 @@ class AttributeParser:
 	def text(self, value):
 		self.guiObject.setText(_(value))
 	def font(self, value):
-		self.guiObject.setFont(parseFont(value, self.scale))
+		self.guiObject.setFont(parseFont(value, self.scaleTuple))
 	def zPosition(self, value):
 		self.guiObject.setZPosition(int(value))
 	def itemHeight(self, value):
@@ -328,16 +365,16 @@ class AttributeParser:
 		self.guiObject.setWrapAround(True)
 	def pointer(self, value):
 		(name, pos) = value.split(':')
-		pos = parsePosition(pos, self.scale)
+		pos = parsePosition(pos, self.scaleTuple)
 		ptr = loadPixmap(name, self.desktop)
 		self.guiObject.setPointer(0, ptr, pos)
 	def seek_pointer(self, value):
 		(name, pos) = value.split(':')
-		pos = parsePosition(pos, self.scale)
+		pos = parsePosition(pos, self.scaleTuple)
 		ptr = loadPixmap(name, self.desktop)
 		self.guiObject.setPointer(1, ptr, pos)
 	def shadowOffset(self, value):
-		self.guiObject.setShadowOffset(parsePosition(value, self.scale))
+		self.guiObject.setShadowOffset(parsePosition(value, self.scaleTuple))
 	def noWrap(self, value):
 		self.guiObject.setNoWrap(1)
 	def id(self, value):
@@ -381,6 +418,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 				else:
 					bpp = 32
 				#print "Resolution:", xres,yres,bpp
+				config.skin.xres.value = xres
 				from enigma import gMainDC
 				gMainDC.getInstance().setResolution(xres, yres)
 				desktop.resize(eSize(xres, yres))
@@ -417,6 +455,18 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 					resolved_font = skin_path
 			addFont(resolved_font, name, scale, is_replacement)
 			#print "Font: ", resolved_font, name, scale, is_replacement
+		for alias in c.findall("alias"):
+		        get = alias.attrib.get
+		        try:
+				name = get("name")
+				font = get("font")
+				size = int(get("size"))
+				height = int(get("height", size)) # to be calculated some day
+				width = int(get("width", size))
+				global fonts
+				fonts[name] = (font, size, height, width)
+			except Exception, ex:
+				print "[SKIN] bad font alias", ex
 
 		for alias in c.findall("alias"):
 			get = alias.attrib.get
@@ -541,17 +591,27 @@ def loadSkinData(desktop):
 				# non-screen element, no need for it any longer
 				elem.clear()
 	# no longer needed, we know where the screens are now.
-	del dom_skins
+	#del dom_skins
 
 def lookupScreen(name, style_id):
 	if dom_screens.has_key(name):
 		elem, path = dom_screens[name]
 		screen_style_id = elem.attrib.get('id', '-1')
-		if screen_style_id == '-1' and name.find('ummary') > 0:
+		if screen_style_id == '-1' and name.find('summary') > 0:
 			screen_style_id = '1'
 		if (style_id != 2 and int(screen_style_id) == -1) or int(screen_style_id) == style_id:
 			return elem, path
 
+	else:
+		for (path, skin) in dom_skins:
+			for x in skin.findall("screen"):
+				if x.attrib.get('name', '') == name:
+					screen_style_id = x.attrib.get('id', '-1')
+					if screen_style_id == '-1' and name.find('summary') > 0:
+						screen_style_id = '1'
+					if (style_id != 2 and int(screen_style_id) == -1) or int(screen_style_id) == style_id:
+						dom_screens[name] = (x, path)
+						return x, path
 	return None, None
 
 class additionalWidget:

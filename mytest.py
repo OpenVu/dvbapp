@@ -575,6 +575,7 @@ skin.loadSkinData(getDesktop(0))
 profile("InputDevice")
 import Components.InputDevice
 Components.InputDevice.InitInputDevices()
+import Components.InputHotplug
 
 profile("AVSwitch")
 import Components.AVSwitch

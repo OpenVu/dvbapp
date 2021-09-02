@@ -4,25 +4,23 @@ from Components.Sources.StaticText import StaticText
 from Components.Harddisk import harddiskmanager
 from Components.NimManager import nimmanager
 from Components.About import about
+from Tools.HardwareInfo import HardwareInfo
+import os
 
 from Tools.DreamboxHardware import getFPVersion
 
 class About(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
-
-		self["EnigmaVersion"] = StaticText("Version: " + about.getEnigmaVersionString())
-		self["ImageVersion"] = StaticText("Image: " + about.getImageVersionString())
-
+		self["NetworkHeader"] = StaticText(_("Network:"))
+		self["Network"] = StaticText(about.getNetworkInfo())
+		self["EnigmaVersion"] = StaticText("Firmware: BlackHole " + about.getImageVersionString() + about.getSubVersionString())
+		self["ImageVersion"] = StaticText("Build: " + about.getEnigmaVersionString())
+		self["DriverVersion"] =  StaticText(_("DVB drivers: ") + about.getDriverDateString())
+		self["KernelVersion"] =  StaticText(_("Kernel version: ") + about.getKernelVersionString())
+		self["FPVersion"] = StaticText("Team Home: www.vuplus-community.net")
+		self["CpuInfo"] =  StaticText(_("CPU: ") + self.getCPUInfoString())
 		self["TunerHeader"] = StaticText(_("Detected NIMs:"))
-
-		fp_version = getFPVersion()
-		if fp_version is None:
-			fp_version = ""
-		else:
-			fp_version = _("Frontprocessor version: %d") % fp_version
-
-		self["FPVersion"] = StaticText(fp_version)
 
 		nims = nimmanager.nimList()
 		if len(nims) <= 4 :
@@ -65,8 +63,40 @@ class About(Screen):
 		else:
 			self["hddA"] = StaticText(_("none"))
 
-		self["actions"] = ActionMap(["SetupActions", "ColorActions"], 
+		self["actions"] = ActionMap(["SetupActions", "ColorActions"],
 			{
 				"cancel": self.close,
 				"ok": self.close,
 			})
+
+
+	def getCPUInfoString(self):
+		mhz = "MHz"
+		cpu_count = 0
+		cpu_speed = "n/a"
+		if HardwareInfo().get_vu_device_name() == "duo4k":
+			cpu_speed = "2.1"
+			mhz = "GHz"
+		elif HardwareInfo().get_vu_device_name() in ("solo4k", "ultimo4k", "zero4k", "duo4kse") :
+			cpu_speed = "1.5"
+			mhz = "GHz"
+		elif HardwareInfo().get_vu_device_name() in ("uno4k", "uno4kse") :
+			cpu_speed = "1.7"
+			mhz = "GHz"
+		try:
+			for line in open("/proc/cpuinfo").readlines():
+				line = [x.strip() for x in line.strip().split(":")]
+				if line[0] == "model name":
+					processor = line[1].split()[0]
+				if line[0] == "system type":
+					processor = line[1].split()[0]
+				if line[0] == "cpu MHz":
+					cpu_speed = "%1.0f" % float(line[1])
+				if line[0] == "processor":
+					cpu_count += 1
+			return "%s %s %s %d cores" % (processor, cpu_speed, mhz, cpu_count)
+		except:
+			return _("undefined")
+
+
+

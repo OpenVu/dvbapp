@@ -72,6 +72,7 @@ class LanguageSelection(Screen):
 		language.activateLanguage(lang)
 		config.misc.languageselected.value = 0
 		config.misc.languageselected.save()
+
 		print "ok"
 
 	def updateList(self):

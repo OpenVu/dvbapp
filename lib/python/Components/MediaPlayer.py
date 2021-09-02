@@ -1,5 +1,6 @@
 from MenuList import MenuList
 
+from Components.config import config
 from Tools.Directories import SCOPE_CURRENT_SKIN, resolveFilename
 from os import path
 

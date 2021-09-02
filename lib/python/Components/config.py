@@ -862,8 +862,8 @@ vukeymap_us_de = {
 vumapidx = 0
 vukeymap = vukeymap_us_de
 rckeyboard_enable = False
-if file("/proc/stb/info/vumodel").read().strip() not in ["bm750", "solo", "uno"]:
-	rckeyboard_enable = True
+#if file("/proc/stb/info/vumodel").read().strip() not in ["bm750", "solo", "uno"]:
+#	rckeyboard_enable = True
 
 def getCharValue(code):
 	global vumapidx

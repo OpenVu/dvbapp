@@ -40,7 +40,7 @@ class MovieList(GUIComponent):
 		if root is not None:
 			self.reload(root)
 		
-		self.redrawList()
+#		self.redrawList()
 		self.l.setBuildFunc(self.buildMovieListEntry)
 		
 		self.onSelectionChanged = [ ]
@@ -114,7 +114,6 @@ class MovieList(GUIComponent):
 				self.l.setFont(i, gFont(self.fontName, self.fontSizesOriginal[i]))
 			self.itemHeight = self.itemHeights[0]
 		elif self.list_type == MovieList.LISTTYPE_COMPACT_DESCRIPTION or self.list_type == MovieList.LISTTYPE_COMPACT:
-			self.l.setItemHeight(37)
 			for i in range(2):
 				self.l.setFont(i, gFont(self.fontName, self.fontSizesCompact[i]))
 			self.itemHeight = self.itemHeights[1]
@@ -132,6 +131,8 @@ class MovieList(GUIComponent):
 			return None
 
 		width = self.l.getItemSize().width()
+		
+		iconSize = 0
 
 		if len <= 0: #recalc len when not already done
 			cur_idx = self.l.getCurrentSelectionIndex()

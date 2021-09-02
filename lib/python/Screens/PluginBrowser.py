@@ -14,6 +14,9 @@ from Tools.LoadPixmap import LoadPixmap
 
 from time import time
 
+import os
+import glob
+
 def languageChanged():
 	plugins.clearPluginList()
 	plugins.readPluginList(resolveFilename(SCOPE_PLUGINS))
@@ -188,7 +191,8 @@ class PluginDownloadBrowser(Screen):
 				self.container.execute("opkg update")
 				PluginDownloadBrowser.lastDownloadDate = time()
 			else:
-				self.startIpkgListAvailable()
+				self.run = 1
+				self.startIpkgListInstalled()
 		elif self.type == self.REMOVE:
 			self.run = 1
 			self.startIpkgListInstalled()
@@ -207,7 +211,16 @@ class PluginDownloadBrowser(Screen):
 				self.startIpkgListInstalled()
 		elif self.run == 1 and self.type == self.DOWNLOAD:
 			self.run = 2
-			self.startIpkgListAvailable()
+			for x in self.getPluginListAvailable():
+				if x[0] not in self.installedplugins:
+					self.pluginlist.append(x)
+
+			if self.pluginlist:
+				self.pluginlist.sort()
+				self.updateList()
+				self["list"].instance.show()
+			else:
+				self["text"].setText(_("No new plugins found"))
 		else:
 			if len(self.pluginlist) > 0:
 				self.updateList()
@@ -229,17 +242,18 @@ class PluginDownloadBrowser(Screen):
 			self.remainingdata = ""
 
 		for x in lines:
-			plugin = x.split(" - ")
+			plugin = x.split(" - ", 2)
 			if len(plugin) >= 2:
-				if self.run == 1 and self.type == self.DOWNLOAD:
+				if plugin[0].startswith('enigma2-plugin-') and not plugin[0].endswith('-dev') and not plugin[0].endswith('-staticdev') and not plugin[0].endswith('-dbg') and not plugin[0].endswith('-doc') and not plugin[0].endswith('-src'):
 					if plugin[0] not in self.installedplugins:
-						self.installedplugins.append(plugin[0])
-				else:
-					if plugin[0] not in self.installedplugins:
-						plugin.append(plugin[0][15:])
+						if self.run == 1 and self.type == self.DOWNLOAD:
+							self.installedplugins.append(plugin[0])
+						else:
+							if len(plugin) == 2:
+								plugin.append('')
+							plugin.append(plugin[0][15:])
+							self.pluginlist.append(plugin)
 
-						self.pluginlist.append(plugin)
-	
 	def updateList(self):
 		list = []
 		expandableIcon = LoadPixmap(resolveFilename(SCOPE_SKIN_IMAGE, "skin_default/expandable-plugins.png"))
@@ -248,13 +262,6 @@ class PluginDownloadBrowser(Screen):
 		
 		self.plugins = {}
 		for x in self.pluginlist:
-			if len(x) < 4:
-				split = x[0].split('-',3)
-				if not self.plugins.has_key(split[2]):
-					self.plugins[split[2]] = []
-				self.plugins[split[2]].append((PluginDescriptor(name = x[2], description = " ", icon = verticallineIcon), split[3]))
-				continue
-
 			split = x[3].split('-', 1)
 			if len(split) < 2:
 				continue
@@ -271,5 +278,62 @@ class PluginDownloadBrowser(Screen):
 				list.append(PluginCategoryComponent(x, expandableIcon, self.listWidth))
 		self.list = list
 		self["list"].l.setList(list)
+
+	def getPluginListAvailable(self):
+			plugin_list = []
+			# get feed names
+			feeds = []
+			for fn in glob.glob("/etc/opkg/*-feed.conf"):
+				feeds.append(open(fn, 'r').read().split()[1])
+
+			#get list_dir
+			list_dir = "/var/lib/opkg"
+			for line in open("/etc/opkg/opkg.conf", 'r'):
+				if line.startswith('lists_dir'):
+					list_dir = line.split()[-1]
+
+			for feed in feeds:
+				Package = None
+
+				fn = os.path.join(list_dir, feed)
+				if not os.path.exists(fn):
+					continue
+
+				for line in open(fn, 'r'):
+					if line.startswith("Package:"):
+						pkg = line.split(":", 1)[1].strip()
+						if pkg.startswith('enigma2-plugin-') and not pkg.endswith('-dev') and not pkg.endswith('-staticdev') and not pkg.endswith('-dbg') and not pkg.endswith('-doc') and not pkg.endswith('-src'):
+							Package = pkg
+							Version = ''
+							Description = ''
+						continue
+
+					if Package is None:
+						continue
+
+					if line.startswith("Version:"):
+						Version = line.split(":", 1)[1].strip()
+
+					elif line.startswith("Description:"):
+						Description = line.split(":", 1)[1].strip()
+
+					elif Description and line.startswith(' '):
+						Description += line[:-1]
+
+					elif len(line) <= 1:
+						sp = Description.split(' ', 3)
+						if sp[1] == "version":
+							Description = sp[3].strip()
+
+						pn = Package.split('enigma2-plugin-')[1]
+
+						sp = Description.split(' ', 1)
+						if sp[0] == pn and len(sp[1]) > 0:
+							Description = sp[1].strip()
+
+						plugin_list.append((Package, Version, Description, pn))
+						Package = None
+
+			return plugin_list
 
 language.addCallback(languageChanged)

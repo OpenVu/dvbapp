@@ -1,17 +1,28 @@
 from Components.Harddisk import harddiskmanager
 from Components.NimManager import nimmanager
-from config import ConfigSubsection, ConfigYesNo, config, ConfigSelection, ConfigText, ConfigNumber, ConfigSet, ConfigLocations
+from config import ConfigSubsection, ConfigYesNo, config, ConfigSelection, ConfigText, ConfigNumber, ConfigSet, ConfigLocations, ConfigSelectionNumber
+from Tools.Directories import defaultRecordingLocation
 from Tools.Directories import resolveFilename, SCOPE_HDD
-from enigma import Misc_Options, eEnv
+from enigma import eDVBDB, Misc_Options, eEnv, eEPGCache
 from enigma import setTunerTypePriorityOrder, setPreferredTuner
+from enigma import Misc_Options, eEnv, setTunerTypePriorityOrder, setPreferredTuner, eServiceEvent
 from SystemInfo import SystemInfo
 import os
 
 def InitUsageConfig():
 	config.usage = ConfigSubsection();
 	config.usage.showdish = ConfigYesNo(default = True)
-	config.usage.multibouquet = ConfigYesNo(default = False)
+	config.usage.multibouquet = ConfigYesNo(default = True)
 	config.usage.multiepg_ask_bouquet = ConfigYesNo(default = False)
+
+	config.usage.alternative_number_mode = ConfigYesNo(default = False)
+	def alternativeNumberModeChange(configElement):
+    		eDVBDB.getInstance().setNumberingMode(configElement.value)
+    		refreshServiceList()
+	config.usage.alternative_number_mode.addNotifier(alternativeNumberModeChange)
+
+	config.usage.hide_number_markers = ConfigYesNo(default = False)
+	config.usage.hide_number_markers.addNotifier(refreshServiceList)
 
 	config.usage.quickzap_bouquet_change = ConfigYesNo(default = False)
 	config.usage.e1like_radio_mode = ConfigYesNo(default = False)
@@ -22,6 +33,9 @@ def InitUsageConfig():
 	config.usage.show_infobar_on_zap = ConfigYesNo(default = True)
 	config.usage.show_infobar_on_skip = ConfigYesNo(default = True)
 	config.usage.show_infobar_on_event_change = ConfigYesNo(default = True)
+	config.usage.show_eit_nownext = ConfigYesNo(default = True)
+	config.usage.hide_zap_errors = ConfigYesNo(default = False)
+	config.usage.hide_ci_messages = ConfigYesNo(default = False)
 	config.usage.hdd_standby = ConfigSelection(default = "600", choices = [
 		("0", _("no standby")), ("10", "10 " + _("seconds")), ("30", "30 " + _("seconds")),
 		("60", "1 " + _("minute")), ("120", "2 " + _("minutes")),
@@ -35,7 +49,7 @@ def InitUsageConfig():
 		("standard", _("standard")), ("swap", _("swap PiP and main picture")),
 		("swapstop", _("move PiP to main picture")), ("stop", _("stop PiP")) ])
 
-	config.usage.default_path = ConfigText(default = resolveFilename(SCOPE_HDD))
+	config.usage.default_path = ConfigText(default = "")
 	config.usage.timer_path = ConfigText(default = "<default>")
 	config.usage.instantrec_path = ConfigText(default = "<default>")
 	config.usage.timeshift_path = ConfigText(default = "/media/hdd/")
@@ -72,12 +86,17 @@ def InitUsageConfig():
 		("4", "DVB-T/-C/-S"),
 		("5", "DVB-T/-S/-C") ])
 
+	config.usage.service_icon_enable = ConfigYesNo(default = False)
+	config.usage.service_icon_enable.addNotifier(refreshServiceList)
+
+	config.usage.show_event_progress_in_servicelist = ConfigYesNo(default = True)
+		
+	config.usage.show_event_progress_in_servicelist.addNotifier(refreshServiceList)
+
 	nims = [ ("-1", _("auto")) ]
 	for x in nimmanager.nim_slots:
 		nims.append( (str(x.slot), x.getSlotName()) )
 	config.usage.frontend_priority = ConfigSelection(default = "-1", choices = nims)
-
-	config.usage.show_event_progress_in_servicelist = ConfigYesNo(default = False)
 
 	config.usage.blinking_display_clock_during_recording = ConfigYesNo(default = False)
 
@@ -92,6 +111,60 @@ def InitUsageConfig():
 	def PreferredTunerChanged(configElement):
 		setPreferredTuner(int(configElement.value))
 	config.usage.frontend_priority.addNotifier(PreferredTunerChanged)
+
+	#my_tmp_path = "/hdd/epg.dat"
+		
+	config.misc.epgcache_filename = ConfigSelection(default = "/hdd/epg.dat", choices = [
+	("/hdd/epg.dat", "media/hdd"), ("/media/usb/epg.dat", "media/usb"), ("/media/net/epg.dat", "media/net"), ("/media/video/epg.dat", "media/video"), ("/media/music/epg.dat", "media/music"), ("/media/photo/epg.dat", "media/photo"), ("/media/downloads/epg.dat", "media/downloads"), ("/media/personal/epg.dat", "media/personal")])
+	def EpgCacheChanged(configElement):
+		config.misc.epgcache_filename.save()
+		eEPGCache.getInstance().setCacheFile(config.misc.epgcache_filename.value)
+		epgcache = eEPGCache.getInstance()
+		epgcache.save()		
+	config.misc.epgcache_filename.addNotifier(EpgCacheChanged, immediate_feedback = False)
+	
+	config.misc.deliteepgpop = ConfigYesNo(default = True)
+	config.misc.deliteepgbuttons = ConfigYesNo(default = True)
+
+	config.epg = ConfigSubsection()
+	config.epg.eit = ConfigYesNo(default = True)
+	config.epg.mhw = ConfigYesNo(default = False)
+	config.epg.freesat = ConfigYesNo(default = True)
+	config.epg.viasat = ConfigYesNo(default = True)
+	config.epg.netmed = ConfigYesNo(default = True)
+	config.epg.virgin = ConfigYesNo(default = False)
+	config.epg.sky = ConfigYesNo(default = True)
+	def EpgSettingsChanged(configElement):
+		from enigma import eEPGCache
+		mask = 0xffffffff
+		if not config.epg.eit.value:
+			mask &= ~(eEPGCache.NOWNEXT | eEPGCache.SCHEDULE | eEPGCache.SCHEDULE_OTHER)
+		if not config.epg.mhw.value:
+			mask &= ~eEPGCache.MHW
+		if not config.epg.freesat.value:
+			mask &= ~(eEPGCache.FREESAT_NOWNEXT | eEPGCache.FREESAT_SCHEDULE | eEPGCache.FREESAT_SCHEDULE_OTHER)
+		if not config.epg.viasat.value:
+			mask &= ~eEPGCache.VIASAT
+		#if not config.epg.netmed.value:
+		#	mask &= ~(eEPGCache.NETMED_SCHEDULE | eEPGCache.NETMED_SCHEDULE_OTHER)
+		#if not config.epg.virgin.value:
+		#	mask &= ~(eEPGCache.VIRGIN_NOWNEXT | eEPGCache.VIRGIN_SCHEDULE)
+		if not config.epg.sky.value:
+			mask &= ~eEPGCache.SKY
+		eEPGCache.getInstance().setEpgSources(mask)
+	config.epg.eit.addNotifier(EpgSettingsChanged)
+	config.epg.mhw.addNotifier(EpgSettingsChanged)
+	config.epg.freesat.addNotifier(EpgSettingsChanged)
+	config.epg.viasat.addNotifier(EpgSettingsChanged)
+	config.epg.netmed.addNotifier(EpgSettingsChanged)
+	config.epg.virgin.addNotifier(EpgSettingsChanged)
+	config.epg.sky.addNotifier(EpgSettingsChanged)
+
+	config.epg.histminutes = ConfigSelectionNumber(min = 0, max = 120, stepwidth = 15, default = 0, wraparound = True)
+	def EpgHistorySecondsChanged(configElement):
+		from enigma import eEPGCache
+		eEPGCache.getInstance().setEpgHistorySeconds(config.epg.histminutes.getValue()*60)
+	config.epg.histminutes.addNotifier(EpgHistorySecondsChanged)
 
 	def setHDDStandby(configElement):
 		for hdd in harddiskmanager.HDDList():
@@ -120,6 +193,8 @@ def InitUsageConfig():
 
 	config.seek.enter_forward = ConfigSelection(default = "2", choices = ["2", "4", "6", "8", "12", "16", "24", "32", "48", "64", "96", "128"])
 	config.seek.enter_backward = ConfigSelection(default = "1", choices = ["1", "2", "4", "6", "8", "12", "16", "24", "32", "48", "64", "96", "128"])
+
+	config.seek.vod_buttons = ConfigYesNo(default = True)
 
 	config.seek.on_pause = ConfigSelection(default = "play", choices = [
 		("play", _("Play")),
@@ -153,7 +228,7 @@ def InitUsageConfig():
 		("6", _("magneta")),
 		("7", _("red")),
 		("8", _("black")) ])
-	config.subtitles.subtitle_fontsize  = ConfigSelection(choices = ["%d" % x for x in range(16,101) if not x % 2], default = "20")
+	config.subtitles.subtitle_fontsize  = ConfigSelection(choices = ["%d" % x for x in range(16,101) if not x % 2], default = "40")
 	config.subtitles.subtitle_bgcolor = ConfigSelection(default = "0", choices = [
 		("0", _("black")),
 		("1", _("red")),
@@ -174,7 +249,8 @@ def InitUsageConfig():
 		("175", "70%"),
 		("200", "80%"),
 		("225", "90%"),
-		("255", _("Full transparency"))])
+		("255", _("full transparency"))])
+
 	config.subtitles.subtitle_edgestyle = ConfigSelection(default = "2", choices = [
 		("0", "None"),
 		("1", "Raised"),
@@ -211,6 +287,110 @@ def InitUsageConfig():
 		("29970", _("29.97")),
 		("30000", _("30"))])
 	config.subtitles.pango_autoturnon = ConfigYesNo(default = True)
+	
+	config.autolanguage = ConfigSubsection()
+	audio_language_choices=[
+		("---", _("None")),
+		("und", _("Undetermined")),
+		("orj dos ory org esl qaa und mis mul ORY ORJ Audio_ORJ", _("Original")),
+		("ara", _("Arabic")),
+		("eus baq", _("Basque")),
+		("bul", _("Bulgarian")),
+		("hrv", _("Croatian")),
+		("ces cze", _("Czech")),
+		("dan", _("Danish")),
+		("dut ndl nld Dutch", _("Dutch")),
+		("eng qaa Englisch", _("English")),
+		("est", _("Estonian")),
+		("fin", _("Finnish")),
+		("fra fre", _("French")),
+		("deu ger", _("German")),
+		("ell gre", _("Greek")),
+		("heb", _("Hebrew")),
+		("hun", _("Hungarian")),
+		("ita", _("Italian")),
+		("lav", _("Latvian")),
+		("lit", _("Lithuanian")),
+		("ltz", _("Luxembourgish")),
+		("nor", _("Norwegian")),
+		("pol", _("Polish")),
+		("por", _("Portuguese")),
+		("fas per", _("Persian")),
+		("ron rum", _("Romanian")),
+		("rus", _("Russian")),
+		("srp", _("Serbian")),
+		("slk slo", _("Slovak")),
+		("slv", _("Slovenian")),
+		("spa", _("Spanish")),
+		("swe", _("Swedish")),
+		("tha", _("Thai")),
+		("tur Audio_TUR", _("Turkish")),
+		("ukr Ukr", _("Ukrainian")),
+		("NAR", _("Visual impaired commentary")),
+		]
+	
+	config.autolanguage.audio_autoselect1 = ConfigSelection(choices=audio_language_choices, default="---")
+	config.autolanguage.audio_autoselect2 = ConfigSelection(choices=audio_language_choices, default="---")
+	config.autolanguage.audio_autoselect3 = ConfigSelection(choices=audio_language_choices, default="---")
+	config.autolanguage.audio_autoselect4 = ConfigSelection(choices=audio_language_choices, default="---")
+	config.autolanguage.audio_defaultac3 = ConfigYesNo(default = False)
+	config.autolanguage.audio_usecache = ConfigYesNo(default = True)
+
+	subtitle_language_choices = audio_language_choices[:1] + audio_language_choices [2:]
+	config.autolanguage.subtitle_autoselect1 = ConfigSelection(choices=subtitle_language_choices, default="---")
+	config.autolanguage.subtitle_autoselect2 = ConfigSelection(choices=subtitle_language_choices, default="---")
+	config.autolanguage.subtitle_autoselect3 = ConfigSelection(choices=subtitle_language_choices, default="---")
+	config.autolanguage.subtitle_autoselect4 = ConfigSelection(choices=subtitle_language_choices, default="---")
+	config.autolanguage.subtitle_hearingimpaired = ConfigYesNo(default = False)
+	config.autolanguage.subtitle_defaultimpaired = ConfigYesNo(default = False)
+	config.autolanguage.subtitle_defaultdvb = ConfigYesNo(default = False)
+	config.autolanguage.subtitle_usecache = ConfigYesNo(default = True)
+
+	epg_language_choices=[
+		("---", _("None")),
+		("eng qaa", _("English")),
+		("deu ger", _("German")),
+		("ara", _("Arabic")),
+		("eus baq", _("Basque")),
+		("bul", _("Bulgarian")),
+		("hrv", _("Croatian")),
+		("ces cze", _("Czech")),
+		("dan", _("Danish")),
+		("dut ndl nld", _("Dutch")),
+		("est", _("Estonian")),
+		("fin", _("Finnish")),
+		("fra fre", _("French")),
+		("ell gre", _("Greek")),
+		("heb", _("Hebrew")),
+		("hun", _("Hungarian")),
+		("ita", _("Italian")),
+		("lav", _("Latvian")),
+		("lit", _("Lithuanian")),
+		("ltz", _("Luxembourgish")),
+		("nor", _("Norwegian")),
+		("fas per fa pes", _("Persian")),
+		("pol", _("Polish")),
+		("por dub Dub DUB ud1", _("Portuguese")),
+		("ron rum", _("Romanian")),
+		("rus", _("Russian")),
+		("srp", _("Serbian")),
+		("slk slo", _("Slovak")),
+		("slv", _("Slovenian")),
+		("spa", _("Spanish")),
+		("swe", _("Swedish")),
+		("tha", _("Thai")),
+		("tur Audio_TUR", _("Turkish")),
+		("ukr Ukr", _("Ukrainian"))]
+
+	def setEpgLanguage(configElement):
+		eServiceEvent.setEPGLanguage(configElement.value)
+	config.autolanguage.epglanguage = ConfigSelection(epg_language_choices, default="---")
+	config.autolanguage.epglanguage.addNotifier(setEpgLanguage)
+
+	def setEpgLanguageAlternative(configElement):
+		eServiceEvent.setEPGLanguageAlternative(configElement.value)
+	config.autolanguage.epglanguage_alternative = ConfigSelection(epg_language_choices, default="---")
+	config.autolanguage.epglanguage_alternative.addNotifier(setEpgLanguageAlternative)
 
 def updateChoices(sel, choices):
 	if choices:
@@ -226,7 +406,7 @@ def updateChoices(sel, choices):
 		sel.setChoices(map(str, choices), defval)
 
 def preferredPath(path):
-	if config.usage.setup_level.index < 2 or path == "<default>":
+	if config.usage.setup_level.index < 2 or path == "<default>" or not path:
 		return None  # config.usage.default_path.value, but delay lookup until usage
 	elif path == "<current>":
 		return config.movielist.last_videodir.value
@@ -242,5 +422,12 @@ def preferredInstantRecordPath():
 	return preferredPath(config.usage.instantrec_path.value)
 
 def defaultMoviePath():
-	return config.usage.default_path.value
+	return defaultRecordingLocation(config.usage.default_path.value)
 
+def refreshServiceList(configElement = None):
+	from Screens.InfoBar import InfoBar
+	InfoBarInstance = InfoBar.instance
+	if InfoBarInstance is not None:
+		servicelist = InfoBarInstance.servicelist
+		if servicelist:
+			servicelist.setMode()

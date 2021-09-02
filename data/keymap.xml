@@ -96,7 +96,9 @@
 	</map>
 
 	<map context="InfobarExtensions">
-		<key id="KEY_BLUE" mapto="extensions" flags="b" />
+		<key id="KEY_BLUE" mapto="DeliteBpshow" flags="b" />
+		<key id="KEY_BLUE" mapto="extensions" flags="l" />
+		<key id="KEY_RED" mapto="BhRedpshow" flags="l" />
 	</map>
 	
 	<map context="SatlistShortcutAction">
@@ -214,7 +216,8 @@
 	</map>
 
 	<map context="InfobarSubserviceSelectionActions">
-		<key id="KEY_GREEN" mapto="subserviceSelection" flags="b" />
+		<key id="KEY_GREEN" mapto="DeliteGpshow" flags="b" />
+		<key id="KEY_GREEN" mapto="subserviceSelection" flags="l" />
 	</map>
 
 	<map context="InfobarRedButtonActions">
@@ -468,6 +471,26 @@
 		<key id="KEY_TEXT" mapto="startTeletext" flags="m" />
 	</map>
 
+	<map context="TeletextActions">
+		<key id="KEY_RIGHT" mapto="nextSubPage" flags="m" />
+		<key id="KEY_LEFT" mapto="prevSubPage" flags="m" />
+		<key id="KEY_UP" mapto="nextPage" flags="m" />
+		<key id="KEY_DOWN" mapto="prevPage" flags="m" />
+		<key id="KEY_OK" mapto="ok" flags="m" />
+		<key id="KEY_FILE" mapto="transparent" flags="m" />
+		<key id="KEY_GREEN" mapto="green" flags="m" />
+		<key id="KEY_YELLOW" mapto="yellow" flags="m" />
+		<key id="KEY_RED" mapto="red" flags="m" />
+		<key id="KEY_BLUE" mapto="blue" flags="m" />
+		<key id="KEY_CHANNELUP" mapto="zoomMode" flags="m" />
+		<key id="KEY_CHANNELDOWN" mapto="screenMode" flags="m" />
+		<key id="KEY_HELP" mapto="hint" flags="m" />
+		<key id="KEY_MENU" mapto="menu" flags="m" />
+		<key id="KEY_TEXT" mapto="exit" flags="m" />
+		<key id="KEY_EXIT" mapto="exit" flags="m" />
+		<key id="KEY_POWER" mapto="exit" flags="m" />
+	</map>
+
 	<map context="InfobarRdsActions">
 		<key id="KEY_TEXT" mapto="startRassInteractive" flags="m" />
 	</map>
@@ -492,6 +515,10 @@
 		<key id="KEY_NEXT" mapto="nextMarker" flags="m" />
 		<key id="KEY_BACK" mapto="prevMarker" flags="m" />
 		<key id="KEY_FORWARD" mapto="nextMarker" flags="m" />
+		<key id="KEY_UP" mapto="ServiceUp" flags="m" />
+		<key id="KEY_DOWN" mapto="ServiceDown" flags="m" />
+		<key id="KEY_UP" mapto="ServiceUp" flags="m" />
+		<key id="KEY_DOWN" mapto="ServiceDown" flags="m" />
 	</map>
 
 	<map context="ChannelSelectEPGActions">

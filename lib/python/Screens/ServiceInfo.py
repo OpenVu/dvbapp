@@ -3,9 +3,11 @@ from Components.GUIComponent import GUIComponent
 from Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Label import Label
+from Components.config import config
 from ServiceReference import ServiceReference
 from enigma import eListboxPythonMultiContent, eListbox, gFont, iServiceInformation, eServiceCenter
 from Tools.Transponder import ConvertToHumanReadable
+from Components.NimManager import nimmanager
 import skin
 
 RT_HALIGN_LEFT = 0
@@ -44,6 +46,11 @@ def ServiceInfoListEntry(a, b, valueType=TYPE_TEXT, param=4):
 class ServiceInfoList(HTMLComponent, GUIComponent):
 	def __init__(self, source):
 		GUIComponent.__init__(self)
+		fontsize = 23
+		itemh = 25
+		if config.skin.xres.value == 1920:
+			fontsize = 28
+			itemh = 35
 		self.l = eListboxPythonMultiContent()
 		self.list = source
 		self.l.setList(self.list)
@@ -153,7 +160,11 @@ class ServiceInfo(Screen):
 					 "constellation"		: _("Constellation"),
 					 "transmission_mode"		: _("Transmission mode"),
 					 "guard_interval" 		: _("Guard interval"),
-					 "hierarchy_information"	: _("Hierarchy info") }
+					 "hierarchy_information"	: _("Hierarchy info"),
+					 "plp_id"			: _("PLP ID"),
+					 "is_id"			: _("Input Stream ID"),
+					 "pls_mode"			: _("PLS Mode"),
+					 "pls_code"			: _("PLS Code")}
 				Labels = [(conv[i], tp_info[i], TYPE_VALUE_DEC) for i in tp_info.keys()]
 				self.fillList(Labels)
 
@@ -187,7 +198,7 @@ class ServiceInfo(Screen):
 		if frontendDataOrg and len(frontendDataOrg):
 			frontendData = ConvertToHumanReadable(frontendDataOrg)
 			if frontendDataOrg["tuner_type"] == "DVB-S":
-				return ((_("NIM"), chr(ord('A')+int(frontendData["tuner_number"])), TYPE_TEXT),
+				data = ((_("NIM"), chr(ord('A')+int(frontendData["tuner_number"])), TYPE_TEXT),
 						(_("Type"), frontendData["tuner_type"], TYPE_TEXT),
 						(_("System"), frontendData["system"], TYPE_TEXT),
 						(_("Modulation"), frontendData["modulation"], TYPE_TEXT),
@@ -199,6 +210,11 @@ class ServiceInfo(Screen):
 						(_("FEC"), frontendData["fec_inner"], TYPE_TEXT),
 						(_("Pilot"), frontendData.get("pilot", None), TYPE_TEXT),
 						(_("Roll-off"), frontendData.get("rolloff", None), TYPE_TEXT))
+				if nimmanager.isSupportMultistream(int(frontendData["tuner_number"])):
+					data += ((_("Input Stream ID"), frontendData.get("is_id", 0), TYPE_VALUE_DEC),
+						(_("PLS Mode"), frontendData.get("pls_mode", None), TYPE_TEXT),
+						(_("PLS Code"), frontendData.get("pls_code", 0), TYPE_VALUE_DEC))
+				return data
 			elif frontendDataOrg["tuner_type"] == "DVB-C":
 				return ((_("NIM"), chr(ord('A')+int(frontendData["tuner_number"])), TYPE_TEXT),
 						(_("Type"), frontendData["tuner_type"], TYPE_TEXT),

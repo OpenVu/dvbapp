@@ -10,9 +10,7 @@ from Components.MultiContent import MultiContentEntryText
 from Components.Sources.List import List
 from Components.Sources.Boolean import Boolean
 from Components.SystemInfo import SystemInfo
-
 from enigma import iPlayableService, eTimer, eSize
-
 from Tools.ISO639 import LanguageCodes
 from Tools.BoundFunction import boundFunction
 FOCUS_CONFIG, FOCUS_STREAMS = range(2)
@@ -21,23 +19,16 @@ FOCUS_CONFIG, FOCUS_STREAMS = range(2)
 class AudioSelection(Screen, ConfigListScreen):
 	def __init__(self, session, infobar=None, page=PAGE_AUDIO):
 		Screen.__init__(self, session)
-
 		self["streams"] = List([])
 		self["key_red"] = Boolean(False)
 		self["key_green"] = Boolean(False)
 		self["key_yellow"] = Boolean(True)
 		self["key_blue"] = Boolean(False)
-		
 		ConfigListScreen.__init__(self, [])
 		self.infobar = infobar or self.session.infobar
-
-		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
-			{
-				iPlayableService.evUpdatedInfo: self.__updatedInfo
-			})
+		self.__event_tracker = ServiceEventTracker(screen=self, eventmap={iPlayableService.evUpdatedInfo: self.__updatedInfo})
 		self.cached_subtitle_checked = False
 		self.__selected_subtitle = None
-        
 		self["actions"] = NumberActionMap(["ColorActions", "SetupActions", "DirectionActions"],
 		{
 			"red": self.keyRed,
@@ -58,7 +49,6 @@ class AudioSelection(Screen, ConfigListScreen):
 			"8": self.keyNumberGlobal,
 			"9": self.keyNumberGlobal,
 		}, -2)
-
 		self.settings = ConfigSubsection()
 		choicelist = [(PAGE_AUDIO,_("audio tracks")), (PAGE_SUBTITLES,_("Subtitles"))]
 		self.settings.menupage = ConfigSelection(choices = choicelist, default=page)
@@ -145,7 +135,7 @@ class AudioSelection(Screen, ConfigListScreen):
 				sel = None
 
 			idx = 0
-			
+
 			subtitlelist = self.getSubtitleList()
 
 			if len(subtitlelist):
@@ -158,7 +148,7 @@ class AudioSelection(Screen, ConfigListScreen):
 					if sel and x == sel:
 						selected = _("Running")
 						selectedidx = idx
-					
+
 					if x[4] != "und":
 						if LanguageCodes.has_key(x[4]):
 							language = LanguageCodes[x[4]][0]
@@ -179,15 +169,15 @@ class AudioSelection(Screen, ConfigListScreen):
 
 					streams.append((x, "", number, description, language, selected))
 					idx += 1
-			
+
 			else:
 				streams = []
 
 		conflist.append(getConfigListEntry(_("Menu"), self.settings.menupage))
-		
+
 		from Components.PluginComponent import plugins
 		from Plugins.Plugin import PluginDescriptor
-		
+
 		if hasattr(self.infobar, "runPlugin"):
 			class PluginCaller:
 				def __init__(self, fnc, *args):
@@ -215,9 +205,12 @@ class AudioSelection(Screen, ConfigListScreen):
 		self.fillList()
 
 	def getSubtitleList(self):
-		s = self.infobar and self.infobar.getCurrentServiceSubtitle()
-		l = s and s.getSubtitleList() or [ ]
-		return l
+		try:
+			s = self.infobar and self.infobar.getCurrentServiceSubtitle()
+			l = s and s.getSubtitleList() or []
+			return l
+		except Exception:  # nosec
+			pass
 
 	def subtitlesEnabled(self):
 		return self.infobar.subtitles_enabled
@@ -239,6 +232,7 @@ class AudioSelection(Screen, ConfigListScreen):
 	def changeMode(self, mode):
 		if mode is not None and self.audioChannel:
 			self.audioChannel.selectChannel(int(mode.getValue()))
+		return
 
 	def changeAudio(self, audio):
 		track = int(audio)
@@ -273,8 +267,11 @@ class AudioSelection(Screen, ConfigListScreen):
 			self.colorkey(1)
 
 	def keyYellow(self):
-		if self["key_yellow"].getBoolean():
-			self.colorkey(2)
+#		if self["key_yellow"].getBoolean():
+#			self.colorkey(2)
+		from Screens.Subtitles import Subtitles
+		self.session.open(Subtitles)
+
 
 	def keyBlue(self):
 		if self["key_blue"].getBoolean():

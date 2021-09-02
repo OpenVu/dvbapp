@@ -16,12 +16,12 @@ from Components.config import config
 class EventViewBase:
 	ADD_TIMER = 0
 	REMOVE_TIMER = 1
-	
+
 	def __init__(self, Event, Ref, callback=None, similarEPGCB=None):
 		self.similarEPGCB = similarEPGCB
 		self.cbFunc = callback
 		self.currentService=Ref
-		self.isRecording = (not Ref.ref.flags & eServiceReference.isGroup) and Ref.ref.getPath()
+		self.isRecording = (not Ref.ref.flags & eServiceReference.isGroup) and Ref.ref.getPath() and Ref.ref.getPath()[0] == '/'
 		self.event = Event
 		self["epg_description"] = ScrollLabel()
 		self["datetime"] = Label()
@@ -70,7 +70,7 @@ class EventViewBase:
 		self.session.nav.RecordTimer.removeEntry(timer)
 		self["key_green"].setText(_("Add timer"))
 		self.key_green_choice = self.ADD_TIMER
-	
+
 	def timerAdd(self):
 		if self.isRecording:
 			return
@@ -106,14 +106,14 @@ class EventViewBase:
 		else:
 			self["key_green"].setText(_("Add timer"))
 			self.key_green_choice = self.ADD_TIMER
-			print "Timeredit aborted"		
+			print "Timeredit aborted"
 
 	def finishSanityCorrection(self, answer):
 		self.finishedAdd(answer)
 
 	def setService(self, service):
 		self.currentService=service
-		if self.isRecording:
+		if self.isRecording and (self.currentService.ref.type == eServiceReference.idDVB):
 			self["channel"].setText(_("Recording"))
 		else:
 			name = self.currentService.getServiceName()

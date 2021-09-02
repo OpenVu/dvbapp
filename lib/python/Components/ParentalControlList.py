@@ -1,5 +1,6 @@
 from MenuList import MenuList
 from Components.ParentalControl import IMG_WHITESERVICE, IMG_WHITEBOUQUET, IMG_BLACKSERVICE, IMG_BLACKBOUQUET
+from Components.config import config
 from Tools.Directories import SCOPE_SKIN_IMAGE, resolveFilename
 
 from enigma import eListboxPythonMultiContent, gFont, RT_HALIGN_LEFT
@@ -17,10 +18,17 @@ entryPicture[IMG_WHITEBOUQUET] = LoadPixmap(resolveFilename(SCOPE_SKIN_IMAGE, "s
 def ParentalControlEntryComponent(service, name, protectionType):
 	locked = protectionType[0]
 	sImage = protectionType[1]
-	res = [
-		(service, name, locked),
-		(eListboxPythonMultiContent.TYPE_TEXT, 80, 5, 300, 50, 0, RT_HALIGN_LEFT, name)
-	]
+	
+	if config.skin.xres.value == 1920:
+		res = [
+			(service, name, locked),
+			(eListboxPythonMultiContent.TYPE_TEXT, 80, 2, 300, 50, 0, RT_HALIGN_LEFT, name)
+		]	
+	else:
+		res = [
+			(service, name, locked),
+			(eListboxPythonMultiContent.TYPE_TEXT, 80, 5, 300, 50, 0, RT_HALIGN_LEFT, name)
+		]
 	#Changed logic: The image is defined by sImage, not by locked anymore
 	if sImage != "":
 		res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 0, 0, 32, 32, entryPicture[sImage]))

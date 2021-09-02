@@ -5,6 +5,7 @@ from enigma import eEPGCache, eListbox, eListboxPythonMultiContent, gFont, \
 	RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER, RT_VALIGN_CENTER
 
 from Tools.LoadPixmap import LoadPixmap
+from Components.config import config
 
 from time import localtime, time
 from ServiceReference import ServiceReference

@@ -11,19 +11,24 @@ class MessageBox(Screen):
 	TYPE_INFO = 1
 	TYPE_WARNING = 2
 	TYPE_ERROR = 3
+	TYPE_MESSAGE = 4
 
-	def __init__(self, session, text, type = TYPE_YESNO, timeout = -1, close_on_any_key = False, default = True, enable_input = True, msgBoxID = None):
+	def __init__(self, session, text, type=TYPE_YESNO, timeout=-1, close_on_any_key=False, default=True, enable_input=True, msgBoxID=None, picon=None, simple=False, list=[], timeout_default=None):
 		self.type = type
 		Screen.__init__(self, session)
-		
+
+		if simple:
+			self.skinName="MessageBoxSimple"
+
 		self.msgBoxID = msgBoxID
 
- 		self["text"] = Label(text)
+		self["text"] = Label(text)
 		self["Text"] = StaticText(text)
 		self["selectedChoice"] = StaticText()
 
 		self.text = text
 		self.close_on_any_key = close_on_any_key
+		self.timeout_default = timeout_default
 
 		self["ErrorPixmap"] = Pixmap()
 		self["QuestionPixmap"] = Pixmap()
@@ -31,26 +36,32 @@ class MessageBox(Screen):
 		self.timerRunning = False
 		self.initTimeout(timeout)
 
-		self.list = []
-		if type != self.TYPE_ERROR:
+		picon = picon or type
+		if picon != self.TYPE_ERROR:
 			self["ErrorPixmap"].hide()
-		if type != self.TYPE_YESNO:
+		if picon != self.TYPE_YESNO:
 			self["QuestionPixmap"].hide()
-		if type != self.TYPE_INFO:
+		if picon != self.TYPE_INFO:
 			self["InfoPixmap"].hide()
-
+		self.title = self.type < self.TYPE_MESSAGE and ["Question", "Information", "Warning", "Error"][self.type] or "Message"
 		if type == self.TYPE_YESNO:
-			if default == True:
-				self.list = [ (_("yes"), 0), (_("no"), 1) ]
+			if list:
+				self.list = list
+			elif default == True:
+				self.list = [ (_("yes"), True), (_("no"), False) ]
 			else:
-				self.list = [ (_("no"), 1), (_("yes"), 0) ]
-		
+				self.list = [ (_("no"), False), (_("yes"), True) ]
+		else:
+			self.list = []
+
+		self["list"] = MenuList(self.list)
 		if self.list:
 			self["selectedChoice"].setText(self.list[0][0])
-		self["list"] = MenuList(self.list)
+		else:
+			self["list"].hide()
 
 		if enable_input:
-			self["actions"] = ActionMap(["MsgBoxActions", "DirectionActions"], 
+			self["actions"] = ActionMap(["MsgBoxActions", "DirectionActions"],
 				{
 					"cancel": self.cancel,
 					"ok": self.ok,
@@ -64,6 +75,11 @@ class MessageBox(Screen):
 					"leftRepeated": self.left,
 					"rightRepeated": self.right
 				}, -1)
+
+		self.onLayoutFinish.append(self.layoutFinished)
+
+	def layoutFinished(self):
+		self.setTitle(_(self.title))
 
 	def initTimeout(self, timeout):
 		self.timeout = timeout
@@ -107,14 +123,17 @@ class MessageBox(Screen):
 
 	def timeoutCallback(self):
 		print "Timeout!"
-		self.ok()
+		if self.timeout_default is not None:
+			self.close(self.timeout_default)
+		else:
+			self.ok()
 
 	def cancel(self):
 		self.close(False)
 
 	def ok(self):
-		if self.type == self.TYPE_YESNO:
-			self.close(self["list"].getCurrent()[1] == 0)
+		if self.list:
+			self.close(self["list"].getCurrent()[1])
 		else:
 			self.close(True)
 

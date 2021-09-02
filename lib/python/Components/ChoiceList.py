@@ -5,6 +5,7 @@ from Tools.LoadPixmap import LoadPixmap
 import skin
 
 def ChoiceEntryComponent(key = "", text = ["--"]):
+	font = skin.fonts["ChoiceList"]
 	res = [ text ]
 	if text[0] == "--":
 		x, y, w, h = skin.parameters.get("ChoicelistDash",(0, 0, 800, 25))

@@ -11,6 +11,12 @@ from EpgSelection import EPGSelection
 from enigma import eServiceReference, eEPGCache, eServiceCenter, eRCInput, eTimer, eDVBDB, iPlayableService, iServiceInformation, getPrevAsciiCode, eEnv
 from Components.config import config, ConfigSubsection, ConfigText
 from Tools.NumericalTextInput import NumericalTextInput
+#Blackhole
+from Blackhole.BhEpgSearch import Nab_EpgSearch, Nab_EpgSearchLast
+from Components.PluginComponent import plugins
+from Plugins.Plugin import PluginDescriptor
+from Screens.VirtualKeyBoard import VirtualKeyBoard
+#end
 profile("ChannelSelection.py 2")
 from Components.NimManager import nimmanager
 profile("ChannelSelection.py 2.1")
@@ -141,8 +147,14 @@ class ChannelContextMenu(Screen):
 						if not inBouquet:
 							append_when_current_valid(current, menu, (_("add service to favourites"), self.addServiceToBouquetSelected), level = 0)
 				else:
-					if current_root.getPath().find('FROM SATELLITES') != -1:
-						append_when_current_valid(current, menu, (_("remove selected satellite"), self.removeSatelliteServices), level = 0)
+					if 'FROM SATELLITES' in current_root.getPath() and _("Services") in eServiceCenter.getInstance().info(current).getName(current):
+						unsigned_orbpos = current.getUnsignedData(4) >> 16
+						if unsigned_orbpos == 0xFFFF: #Cable
+							append_when_current_valid(current, menu, (_("remove cable services"), self.removeSatelliteServices), level = 0)
+						elif unsigned_orbpos == 0xEEEE: #Terrestrial
+							append_when_current_valid(current, menu, (_("remove terrestrial services"), self.removeSatelliteServices), level = 0)
+						else:
+							append_when_current_valid(current, menu, (_("remove selected satellite"), self.removeSatelliteServices), level = 0)
 					if haveBouquets:
 						if not inBouquet and current_sel_path.find("PROVIDERS") == -1:
 							append_when_current_valid(current, menu, (_("copy to bouquets"), self.copyCurrentToBouquetList), level = 0)
@@ -260,14 +272,7 @@ class ChannelContextMenu(Screen):
 			self.close(False)
 
 	def removeSatelliteServices(self):
-		curpath = self.csel.getCurrentSelection().getPath()
-		idx = curpath.find("satellitePosition == ")
-		if idx != -1:
-			tmp = curpath[idx+21:]
-			idx = tmp.find(')')
-			if idx != -1:
-				satpos = int(tmp[:idx])
-				eDVBDB.getInstance().removeServices(-1, -1, -1, satpos)
+		self.csel.removeSatelliteServices()
 		self.close()
 
 	def copyCurrentToBouquetList(self):
@@ -570,6 +575,55 @@ class ChannelSelectionEdit:
 				remove(filename)
 		except OSError:
 			print "error during remove of", filename
+
+	def removeSatelliteServices(self):
+		current = self.getCurrentSelection()
+		unsigned_orbpos = current.getUnsignedData(4) >> 16
+		if unsigned_orbpos == 0XFFFF:
+			msg = _("Are you sure to remove all cable services?")
+		elif unsigned_orbpos == 0XEEEE:
+			msg = _("Are you sure to remove all terrestrial services?")
+		else:
+			orbpos = current.getData(4) >> 16
+			try:
+				service_name = str(nimmanager.getSatDescription(orbpos))
+			except:
+				if orbpos > 1800: # west
+					orbpos = 3600 - orbpos
+					h = _("W")
+				else:
+					h = _("E")
+				service_name = ("%d.%d" + h) % (orbpos / 10, orbpos % 10)
+			msg = _("Are you sure to remove all %s services?" % service_name)
+		self.session.openWithCallback(self.removeSatelliteServicesCallback, MessageBox, msg)
+
+	def removeSatelliteServicesCallback(self, res):
+		if not res:
+			return
+
+		currentIndex = self.servicelist.getCurrentIndex()
+		current = self.getCurrentSelection()
+		unsigned_orbpos = current.getUnsignedData(4) >> 16
+		if unsigned_orbpos == 0XFFFF:
+			eDVBDB.getInstance().removeServices(0xFFFF0000 - 0x100000000)
+		elif unsigned_orbpos == 0XEEEE:
+			eDVBDB.getInstance().removeServices(0xEEEE0000 - 0x100000000)
+		else:
+			curpath = self.getCurrentSelection().getPath()
+			idx = curpath.find("satellitePosition == ")
+			if idx != -1:
+				tmp = curpath[idx+21:]
+				idx = tmp.find(')')
+				if idx != -1:
+					satpos = int(tmp[:idx])
+					eDVBDB.getInstance().removeServices(-1, -1, -1, satpos)
+
+		if hasattr(self, 'setMode') and hasattr(self, 'showSatellites'):
+			self.setMode()
+			self.showSatellites()
+			self.servicelist.moveToIndex(currentIndex)
+			if currentIndex != self.servicelist.getCurrentIndex():
+				self.servicelist.instance.moveSelection(self.servicelist.instance.moveEnd)
 
 #  multiple marked entry stuff ( edit mode, later multiepg selection )
 	def startMarkedEdit(self, type):
@@ -1072,8 +1126,42 @@ class ChannelSelectionBase(Screen):
 	def keyNumberGlobal(self, number):
 		unichar = self.numericalTextInput.getKey(number)
 		charstr = unichar.encode("utf-8")
-		if len(charstr) == 1:
+#Blackhole		
+		if config.misc.deliteepgbuttons.value:
+			if unichar == "1":
+				self.session.openWithCallback(self.ShowsearchNab, VirtualKeyBoard, title="Enter event to search", text="")
+			elif unichar == "2":
+				self.Show2Nab()
+			elif unichar == "3":
+				self.Show3Nab()
+			elif unichar == "4":
+				self.session.open(Nab_EpgSearchLast)
+		elif len(charstr) == 1:
 			self.servicelist.moveToChar(charstr[0])
+
+	def ShowsearchNab(self, cmd):
+		if cmd is not None:
+			self.session.open(Nab_EpgSearch, cmd)
+
+	def Show2Nab(self):
+		ref=self.getCurrentSelection()
+		ptr=eEPGCache.getInstance()
+		if ptr.startTimeQuery(ref) != -1:
+			self.session.open(EPGSelection, ref)
+		else:
+			self.session.open(MessageBox, "Sorry no epg currently available for this service.", MessageBox.TYPE_INFO)
+	
+	def Show3Nab(self):
+		myplugin = ""
+		for p in plugins.getPlugins(where = PluginDescriptor.WHERE_EVENTINFO):		
+			nam = p.name
+			pos = nam.find('EPG')
+			if pos != -1:
+				myplugin = p
+		if myplugin:
+			myplugin(session = self.session, servicelist = self)
+
+#end
 
 	def keyAsciiCode(self):
 		#unichar = unichr(getPrevAsciiCode())

@@ -150,12 +150,8 @@ data/defaults/Dream/Makefile
 data/defaults/Dream/hdbouquets/Makefile
 data/defaults/Dream/sdbouquets/Makefile
 data/extensions/Makefile
+data/piconlcd/Makefile
 data/keymaps/Makefile
-data/skin_default/Makefile
-data/skin_default/menu/Makefile
-data/skin_default/icons/Makefile
-data/skin_default/buttons/Makefile
-data/skin_default/spinner/Makefile
 data/rc/Makefile
 include/Makefile
 lib/Makefile
@@ -324,6 +320,7 @@ lib/python/Plugins/SystemPlugins/PvrDescrambleConvert/meta/Makefile
 lib/python/Plugins/Extensions/QuadPiP/Makefile
 lib/python/Plugins/Extensions/QuadPiP/meta/Makefile
 lib/python/Tools/Makefile
+lib/python/Blackhole/Makefile
 lib/service/Makefile
 lib/components/Makefile
 po/Makefile

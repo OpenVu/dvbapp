@@ -1,4 +1,5 @@
 from GUIComponent import GUIComponent
+from Components.config import config
 
 from enigma import eListboxPythonMultiContent, eListbox, gFont
 from Tools.KeyBindings import queryKeyBinding, getKeyDescription
@@ -31,6 +32,9 @@ class HelpMenuList(GUIComponent):
 					(name, flags) = (getKeyDescription(n[0]), n[1])
 					if name is not None:
 						break
+
+				if name is None:
+					continue
 
 				if flags & 8: # for long keypresses, prepend l_ into the key name.
 					name = (name[0], "long")

@@ -7,7 +7,7 @@ from Components.PluginComponent import plugins
 from Components.config import config
 from Components.SystemInfo import SystemInfo
 
-from Tools.Directories import resolveFilename, SCOPE_SKIN
+from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_CURRENT_SKIN, fileExists
 
 import xml.etree.cElementTree
 
@@ -81,11 +81,64 @@ class Menu(Screen):
 		#        string (as we want to reference 
 		#        stuff which is just imported)
 		# FIXME. somehow
-		if arg[0] != "":
-			exec "from " + arg[0] + " import *"
+		if str(arg[0]).find("Screens.Bh") != -1:
+			self.openBhMenu(arg[0])
+		else:
+			if arg[0] != "":
+				exec "from " + arg[0] + " import *"
 
-		self.openDialog(*eval(arg[1]))
+			self.openDialog(*eval(arg[1]))
 
+	def openBhMenu(self, module):
+		module  = module.replace("Screens", "Blackhole")
+		exec "from " + module + " import *"
+		
+		if module == "Blackhole.BhSettings":
+			self.session.openWithCallback(self.menuClosed, DeliteSettings)
+		
+		elif module == "Blackhole.BhEpgPanel":
+			self.session.openWithCallback(self.menuClosed, DeliteEpgPanel)
+			
+		elif module == "Blackhole.BhAddons":
+			self.session.openWithCallback(self.menuClosed, DeliteAddons)
+		
+		elif module == "Blackhole.BhRed":
+			exec "from Blackhole.BhUtils import BhU_check_proc_version"
+			flash = True
+			mounted = False
+			bh_ver = BhU_check_proc_version()
+			un_ver = bh_ver
+		
+			f = open("/proc/mounts",'r')
+			for line in f.readlines():
+				if line.find('/universe') != -1:
+					if line.find('ext') != -1:
+						mounted = True
+			f.close()
+		
+			if fileExists("/.meoinfo"):
+				flash = False
+		
+			if flash == True:
+				if mounted == True:
+					if fileExists("/universe/.buildv"):
+						f = open("/universe/.buildv",'r')
+						un_ver = f.readline().strip()
+						f.close()
+					else:
+						out = open("/universe/.buildv",'w')
+						out.write(bh_ver)
+						out.close()
+						system("chmod a-w /universe/.buildv")
+					if un_ver == bh_ver:
+						self.session.openWithCallback(self.menuClosed, BhRedPanel)
+					else:
+						self.session.openWithCallback(self.menuClosed, BhRedWrong)
+				else:
+					self.session.openWithCallback(self.menuClosed, BhRedDisabled, "0")
+			else:
+				self.session.openWithCallback(self.menuClosed, BhRedDisabled, "flash")
+	
 	def nothing(self): #dummy
 		pass
 
@@ -197,14 +250,38 @@ class Menu(Screen):
 
 		if menuID is not None:
 			# plugins
+			bhorder = []
+			myfile = ""
+			myskinpath = resolveFilename(SCOPE_CURRENT_SKIN, "")
+			if myskinpath == "/usr/share/enigma2/":
+				myskinpath = "/usr/share/enigma2/skin_default/"
+			
+			if fileExists(myskinpath + "menu/menuorder.bh"):
+				myfile = myskinpath + "menu/menuorder.bh"
+			elif fileExists("/usr/share/enigma2/menuorder.bh"):
+				myfile = "/usr/share/enigma2/menuorder.bh"
+			
+			if myfile:
+				file = open(myfile, 'r')
+				for line in file.readlines():
+					parts = line.strip().split()
+					res = (parts[0], parts[1])
+					bhorder.append(res)
+					file.close()
+			
 			for l in plugins.getPluginsForMenu(menuID):
 				# check if a plugin overrides an existing menu
 				plugin_menuid = l[2]
+				weight = l[3]
 				for x in list:
 					if x[2] == plugin_menuid:
 						list.remove(x)
 						break
-				list.append((l[0], boundFunction(l[1], self.session), l[2], l[3] or 50))
+					for y in bhorder:
+						if y[0] == plugin_menuid:
+							weight = int(y[1])
+						
+				list.append((l[0], boundFunction(l[1], self.session), l[2], weight or 50))
 
 		# for the skin: first try a menu_<menuID>, then Menu
 		self.skinName = [ ]

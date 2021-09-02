@@ -1,5 +1,5 @@
-from enigma import eDVBResourceManager
-from Tools.Directories import fileExists
+from enigma import eDVBResourceManager, eDVBCIInterfaces
+from Tools.Directories import fileExists, fileCheck
 from Tools.HardwareInfo import HardwareInfo
 
 SystemInfo = { }
@@ -29,9 +29,18 @@ SystemInfo["NumFrontpanelLEDs"] = countFrontpanelLEDs()
 SystemInfo["FrontpanelDisplay"] = fileExists("/dev/dbox/oled0") or fileExists("/dev/dbox/lcd0")
 SystemInfo["FrontpanelDisplayGrayscale"] = fileExists("/dev/dbox/oled0")
 SystemInfo["DeepstandbySupport"] = HardwareInfo().get_device_name() != "dm800"
-SystemInfo["HdmiInSupport"] = HardwareInfo().get_vu_device_name() in ("ultimo4k", "uno4kse")
-SystemInfo["WOWLSupport"] = HardwareInfo().get_vu_device_name() == "ultimo4k"
-SystemInfo["ScrambledPlayback"] = HardwareInfo().get_vu_device_name() in ("solo4k", "ultimo4k", "uno4kse", "zero4k")
+SystemInfo["HdmiInSupport"] = HardwareInfo().get_vu_device_name() in ("ultimo4k", "uno4kse", "duo4k", "duo4kse")
+SystemInfo["WOWLSupport"] = HardwareInfo().get_vu_device_name() in ("ultimo4k", "duo4k", "duo4kse")
+SystemInfo["ScrambledPlayback"] = "PVR" in open("/proc/stb/tsmux/ci0_input_choices").read()
 SystemInfo["FastChannelChange"] =  fileExists("/proc/stb/frontend/fbc/fcc")
 SystemInfo["MiniTV"] = fileExists("/proc/stb/lcd/live_enable")
+SystemInfo["DisableUsbRecord"] = HardwareInfo().get_vu_device_name() in ("meo", "eddi", "ev0")
+SystemInfo["DefaultAniSpeed"] = HardwareInfo().get_vu_device_name() in ("uno4k", "uno4kse", "zero4k", "duo4k") and 25 or 20
+SystemInfo["DefaultFullHDSkin"] = HardwareInfo().get_vu_device_name() in ("solo4k", "ultimo4k", "uno4k", "uno4kse", "zero4k", "duo4k", "duo4kse")
+SystemInfo["PVRSupport"] = HardwareInfo().get_vu_device_name() not in ["meo", "eddi", "ev0"]
+SystemInfo["CommonInterface"] = eDVBCIInterfaces.getInstance().getNumOfSlots()
+SystemInfo["CommonInterfaceCIDelay"] = fileCheck("/proc/stb/tsmux/rmx_delay")
+for cislot in range (0, SystemInfo["CommonInterface"]):
+	SystemInfo["CI%dSupportsHighBitrates" % cislot] = fileCheck("/proc/stb/tsmux/ci%d_tsclk"  % cislot)
+	SystemInfo["CI%dRelevantPidsRoutingSupport" % cislot] = fileCheck("/proc/stb/tsmux/ci%d_relevant_pids_routing"  % cislot)
 

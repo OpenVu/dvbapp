@@ -5,4 +5,12 @@ dist_install_DATA = \
 	lcd.ttf \
 	md_khmurabi_10.ttf \
 	nmsbd.ttf \
-	tuxtxt.ttf
+	tuxtxt.ttf \
+	army-digital.ttf \
+	Army_Bold_G.ttf \
+	Army_Regular_L.ttf \
+	ForgottenFuturistShadow.ttf \
+	goodtime.ttf \
+	nmsbd2.ttf \
+	tiny.ttf \
+	titles.ttf

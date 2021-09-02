@@ -7,6 +7,7 @@ from Tools.FuzzyDate import FuzzyTime
 from enigma import eListboxPythonMultiContent, eListbox, gFont, \
 	RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_VALIGN_CENTER
 from Tools.LoadPixmap import LoadPixmap
+from Components.config import config
 from timer import TimerEntry
 from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN
 
