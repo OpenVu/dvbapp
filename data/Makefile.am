@@ -1,4 +1,4 @@
-SUBDIRS = countries fonts defaults extensions keymaps skin_default rc
+SUBDIRS = countries fonts defaults extensions keymaps rc
 
 dist_pkgdata_DATA = \
 	defaultsatlists.xml \
