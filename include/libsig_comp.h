@@ -2,6 +2,11 @@
 #define __LIBSIG_COMP_H
 
 #include <sigc++/sigc++.h>
+#include <sigc++/bind.h>
+
+#ifdef SIGC_CXX_NAMESPACES
+using namespace SigC;
+#endif
 
 #define CONNECT(_signal, _slot) _signal.connect(sigc::mem_fun(*this, &_slot))
 #define CONNECT_EXTRA(_signal, _slot, extra_args...) _signal.connect(bind(sigc::mem_fun(*this, &_slot), extra_args))
