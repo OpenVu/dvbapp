@@ -17,6 +17,9 @@
 #include <string>
 #include <new>
 #include <cxxabi.h>
+#ifdef SIGC_CXX_NAMESPACES
+using namespace SigC;
+#endif
 typedef struct
 {
 	unsigned int address;
