@@ -50,7 +50,7 @@ public:
 	void unfreeze();
 	int getPTS(pts_t &now);
 	virtual ~eDVBVideo();
-	RESULT connectEvent(const Slot1<void, struct iTSMPEGDecoder::videoEvent> &event, ePtr<eConnection> &conn);
+	RESULT connectEvent(const sigc::slot1<void, struct iTSMPEGDecoder::videoEvent> &event, ePtr<eConnection> &conn);
 	int getWidth();
 	int getHeight();
 	int getProgressive();
