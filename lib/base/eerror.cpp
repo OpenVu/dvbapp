@@ -8,6 +8,10 @@
 
 #include <string>
 
+#ifdef SIGC_CXX_NAMESPACES
+using namespace SigC;
+#endif
+
 #ifdef MEMLEAK_CHECK
 AllocList *allocList;
 pthread_mutex_t memLock =
