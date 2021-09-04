@@ -76,7 +76,7 @@ void DumpUnfreed()
 };
 #endif
 
-Sigc::Connection logConnection;
+sigc::Connection logConnection;
 sigc::signal2<void, int, const std::string&> logOutput;
 int logOutputConsole=1;
 
